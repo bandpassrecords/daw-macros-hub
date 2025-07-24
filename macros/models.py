@@ -1,0 +1,195 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+import uuid
+import os
+
+
+def keycommands_upload_path(instance, filename):
+    """Generate upload path for key commands files"""
+    return f'keycommands/{instance.user.username}/{timezone.now().strftime("%Y/%m")}/{filename}'
+
+
+class CubaseVersion(models.Model):
+    """Model for tracking Cubase versions"""
+    version = models.CharField(max_length=50, unique=True)
+    major_version = models.IntegerField()
+    minor_version = models.IntegerField(default=0)
+    patch_version = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-major_version', '-minor_version', '-patch_version']
+    
+    def __str__(self):
+        return self.version
+
+
+class KeyCommandsFile(models.Model):
+    """Model for uploaded Key Commands XML files"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='keycommands_files')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    file = models.FileField(upload_to=keycommands_upload_path)
+    cubase_version = models.ForeignKey(CubaseVersion, on_delete=models.SET_NULL, null=True, blank=True)
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    download_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'name']
+    
+    def __str__(self):
+        return f"{self.name} by {self.user.username}"
+    
+    def get_absolute_url(self):
+        return f'/macros/keycommands/{self.id}/'
+
+
+class MacroCategory(models.Model):
+    """Model for macro categories from Key Commands XML"""
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = "Macro Categories"
+    
+    def __str__(self):
+        return self.name
+
+
+class Macro(models.Model):
+    """Model for individual macros/commands"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    keycommands_file = models.ForeignKey(KeyCommandsFile, on_delete=models.CASCADE, related_name='macros')
+    category = models.ForeignKey(MacroCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=500)
+    description = models.TextField(blank=True)
+    key_binding = models.CharField(max_length=100, blank=True)  # For storing key combinations
+    commands_json = models.JSONField(default=list, blank=True)  # Store the actual commands that make up this macro
+    xml_snippet = models.TextField(blank=True)  # Store the original XML snippet for this macro
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # For tracking popularity
+    view_count = models.PositiveIntegerField(default=0)
+    download_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['keycommands_file', 'name', 'category']
+    
+    def __str__(self):
+        return f"{self.name} ({self.category.name if self.category else 'No Category'})"
+    
+    def get_absolute_url(self):
+        return f'/macros/{self.id}/'
+    
+    @property
+    def average_rating(self):
+        """Calculate average rating from votes"""
+        votes = self.votes.all()
+        if votes:
+            return sum(vote.rating for vote in votes) / len(votes)
+        return 0
+    
+    @property
+    def vote_count(self):
+        """Get total number of votes"""
+        return self.votes.count()
+    
+    @property
+    def commands(self):
+        """Get the list of commands that make up this macro"""
+        return self.commands_json or []
+    
+    @property  
+    def commands_count(self):
+        """Get the number of commands in this macro"""
+        return len(self.commands_json) if self.commands_json else 0
+
+
+class MacroVote(models.Model):
+    """Model for macro voting/rating system"""
+    RATING_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+    
+    macro = models.ForeignKey(Macro, on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField(
+        choices=RATING_CHOICES,
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['macro', 'user']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} rated {self.macro.name}: {self.rating} stars"
+
+
+class MacroFavorite(models.Model):
+    """Model for user favorites"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_macros')
+    macro = models.ForeignKey(Macro, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['user', 'macro']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} favorited {self.macro.name}"
+
+
+class MacroCollection(models.Model):
+    """Model for user-created macro collections"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='macro_collections')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    macros = models.ManyToManyField(Macro, related_name='collections', blank=True)
+    is_public = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'name']
+    
+    def __str__(self):
+        return f"{self.name} by {self.user.username}"
+    
+    def get_absolute_url(self):
+        return f'/macros/collections/{self.id}/'
+
+
+class MacroDownload(models.Model):
+    """Model for tracking macro downloads"""
+    macro = models.ForeignKey(Macro, on_delete=models.CASCADE, related_name='downloads')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.GenericIPAddressField()
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-downloaded_at']
+    
+    def __str__(self):
+        user_str = self.user.username if self.user else f"Anonymous ({self.ip_address})"
+        return f"{user_str} downloaded {self.macro.name}"

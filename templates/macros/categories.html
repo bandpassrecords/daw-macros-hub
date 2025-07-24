@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Categories - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-folder-open"></i> Macro Categories
+            </h1>
+            <p class="text-muted mb-0">
+                Browse macros by category to find what you need
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'macros:macro_list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-search"></i> Browse All Macros
+            </a>
+        </div>
+    </div>
+    
+    {% if categories %}
+    <!-- Categories Grid -->
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card category-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="category-icon">
+                            <i class="fas fa-folder fa-2x text-primary"></i>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">
+                            {{ category.macro_count }} macro{{ category.macro_count|pluralize }}
+                        </span>
+                    </div>
+                    
+                    <h5 class="card-title">
+                        <a href="{% url 'macros:category_detail' category.id %}" class="text-decoration-none">
+                            {{ category.name }}
+                        </a>
+                    </h5>
+                    
+                    {% if category.description %}
+                    <p class="card-text text-muted">
+                        {{ category.description|truncatechars:120 }}
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Popular macros preview -->
+                    {% if category.popular_macros %}
+                    <div class="mt-3">
+                        <h6 class="text-muted mb-2">Popular in this category:</h6>
+                        <div class="list-group list-group-flush">
+                            {% for macro in category.popular_macros|slice:":3" %}
+                            <div class="list-group-item px-0 py-1 border-0">
+                                <small>
+                                    <a href="{% url 'macros:macro_detail' macro.id %}" class="text-decoration-none">
+                                        {{ macro.name|truncatechars:40 }}
+                                    </a>
+                                    {% if macro.average_rating %}
+                                    <span class="text-warning ms-1">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= macro.average_rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-eye"></i> {{ category.total_views|default:0 }} views
+                        </small>
+                        <a href="{% url 'macros:category_detail' category.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-arrow-right"></i> Browse
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Statistics -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-pie"></i> Category Statistics
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <h3 class="text-primary">{{ total_categories }}</h3>
+                                <small class="text-muted">Total Categories</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <h3 class="text-success">{{ total_macros }}</h3>
+                                <small class="text-muted">Total Macros</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <h3 class="text-info">{{ most_popular_category.name|default:"N/A"|truncatechars:15 }}</h3>
+                                <small class="text-muted">Most Popular Category</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <h3 class="text-warning">{{ newest_category.name|default:"N/A"|truncatechars:15 }}</h3>
+                                <small class="text-muted">Newest Category</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- No Categories -->
+    <div class="text-center py-5">
+        <i class="fas fa-folder-open fa-4x text-muted mb-4"></i>
+        <h3>No categories available</h3>
+        <p class="text-muted mb-4">Categories will appear here as users upload macros.</p>
+        
+        {% if user.is_authenticated %}
+        <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
+            <i class="fas fa-upload"></i> Upload Your First Macro
+        </a>
+        {% else %}
+        <div class="d-flex gap-2 justify-content-center">
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Sign Up
+            </a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">
+                <i class="fas fa-sign-in-alt"></i> Log In
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.category-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.category-icon {
+    transition: transform 0.2s ease-in-out;
+}
+
+.category-card:hover .category-icon {
+    transform: scale(1.1);
+}
+
+.stat-item h3 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.list-group-item {
+    background-color: transparent !important;
+}
+
+.text-warning .fas.fa-star,
+.text-warning .far.fa-star {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %} 

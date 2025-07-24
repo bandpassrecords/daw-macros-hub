@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Macros - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar with filters -->
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i> Search & Filter
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="search-form">
+                        <!-- Search Query -->
+                        <div class="mb-3">
+                            <label for="{{ form.query.id_for_label }}" class="form-label">
+                                <i class="fas fa-search"></i> Search
+                            </label>
+                            {{ form.query }}
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                <i class="fas fa-folder"></i> Category
+                            </label>
+                            {{ form.category }}
+                        </div>
+                        
+                        <!-- Cubase Version Filter -->
+                        <div class="mb-3">
+                            <label for="{{ form.cubase_version.id_for_label }}" class="form-label">
+                                <i class="fas fa-compact-disc"></i> Cubase Version
+                            </label>
+                            {{ form.cubase_version }}
+                        </div>
+                        
+                        <!-- Sort Options -->
+                        <div class="mb-3">
+                            <label for="{{ form.sort_by.id_for_label }}" class="form-label">
+                                <i class="fas fa-sort"></i> Sort By
+                            </label>
+                            {{ form.sort_by }}
+                        </div>
+                        
+                        <!-- Additional Filters -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.has_key_binding }}
+                                <label class="form-check-label" for="{{ form.has_key_binding.id_for_label }}">
+                                    <i class="fas fa-keyboard"></i> Has key binding
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Apply Filters
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="clear-filters">
+                                <i class="fas fa-times"></i> Clear All
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Popular Categories -->
+            {% if popular_categories %}
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-fire"></i> Popular Categories
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for category in popular_categories %}
+                    <a href="{% url 'macros:category_detail' category.id %}" class="d-block text-decoration-none mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-truncate">{{ category.name|truncatechars:20 }}</span>
+                            <span class="badge bg-secondary">{{ category.macro_count }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-search"></i> Browse Macros
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ total_count }} macro{{ total_count|pluralize }} found
+                    </p>
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div>
+                    <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Your Macros
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Macros Grid -->
+            {% if page_obj %}
+            <div class="row">
+                {% for macro in page_obj %}
+                <div class="col-xl-4 col-lg-6 col-md-12 mb-4">
+                    <div class="card macro-card h-100">
+                        <div class="card-body">
+                            <!-- Macro Title -->
+                            <h6 class="card-title mb-2">
+                                <a href="{% url 'macros:macro_detail' macro.id %}" class="macro-title">
+                                    {{ macro.name|truncatechars:50 }}
+                                </a>
+                            </h6>
+                            
+                            <!-- Category Badge -->
+                            {% if macro.category %}
+                            <div class="mb-2">
+                                <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-decoration-none">
+                                    <span class="badge bg-secondary category-badge">
+                                        <i class="fas fa-folder"></i> {{ macro.category.name }}
+                                    </span>
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Key Binding -->
+                            {% if macro.key_binding %}
+                            <div class="mb-2">
+                                <span class="key-binding">
+                                    <i class="fas fa-keyboard"></i> {{ macro.key_binding }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Description -->
+                            {% if macro.description %}
+                            <p class="card-text text-muted small text-truncate-2">
+                                {{ macro.description }}
+                            </p>
+                            {% endif %}
+                            
+                            <!-- Author and Rating -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">
+                                    by {% if macro.keycommands_file.user.username %}
+                                        <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}" class="text-decoration-none">
+                                            {{ macro.keycommands_file.user.username }}
+                                        </a>
+                                    {% else %}
+                                        Unknown User
+                                    {% endif %}
+                                </small>
+                                
+                                {% if macro.avg_rating %}
+                                <div class="rating-stars">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= macro.avg_rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <small class="text-muted ms-1">({{ macro.vote_count }})</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Cubase Version -->
+                            {% if macro.keycommands_file.cubase_version %}
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-compact-disc"></i> {{ macro.keycommands_file.cubase_version.version }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Card Footer -->
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex gap-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-eye"></i> {{ macro.view_count }}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-download"></i> {{ macro.download_count }}
+                                    </small>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    {% if user.is_authenticated %}
+                                    <button class="btn btn-sm btn-outline-danger btn-favorite" data-macro-id="{{ macro.id }}">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'macros:macro_detail' macro.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Macro pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <!-- No Results -->
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h3>No macros found</h3>
+                <p class="text-muted mb-4">Try adjusting your search criteria or browse all categories.</p>
+                
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                    <a href="{% url 'macros:macro_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> View All Macros
+                    </a>
+                    <a href="{% url 'macros:categories' %}" class="btn btn-outline-info">
+                        <i class="fas fa-folder"></i> Browse Categories
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Macros
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter changes
+    const form = document.getElementById('search-form');
+    const filterInputs = form.querySelectorAll('select, input[type="checkbox"]');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+    
+    // Debounced search for text input
+    const searchInput = form.querySelector('input[name="query"]');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+    }
+    
+    // Clear filters functionality
+    const clearBtn = document.getElementById('clear-filters');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            form.reset();
+            // Submit the form to apply the reset
+            setTimeout(() => form.submit(), 100);
+        });
+    }
+    
+    // Initialize favorite buttons
+    const favoriteButtons = document.querySelectorAll('.btn-favorite');
+    favoriteButtons.forEach(button => {
+        // Check if this macro is already favorited (would need AJAX call or server-side data)
+        // For now, we'll just set up the click handler
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const macroId = this.dataset.macroId;
+            toggleFavorite(macroId, this);
+        });
+    });
+});
+
+// This function is defined in main.js
+function toggleFavorite(macroId, button) {
+    // Implementation is in main.js
+    window.toggleFavorite(macroId, button);
+}
+</script>
+{% endblock %} 

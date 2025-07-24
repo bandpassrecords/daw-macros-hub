@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cubase Macros Hub - Share and Discover Cubase Macros{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold">
+                    <i class="fas fa-music"></i> Cubase Macros Hub
+                </h1>
+                <p class="lead">
+                    Discover, share, and download Cubase macros from the community. 
+                    Enhance your music production workflow with powerful automation.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{% url 'macros:macro_list' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-search"></i> Browse Macros
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-upload"></i> Upload Your Macros
+                        </a>
+                    {% else %}
+                        <a href="{% url 'accounts:register' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-user-plus"></i> Join the Community
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <i class="fas fa-keyboard display-1 opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="bg-light py-4">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="h2 text-primary mb-0">{{ stats.total_macros }}</div>
+                <small class="text-muted">Public Macros</small>
+            </div>
+            <div class="col-md-3">
+                <div class="h2 text-success mb-0">{{ stats.total_users }}</div>
+                <small class="text-muted">Community Members</small>
+            </div>
+            <div class="col-md-3">
+                <div class="h2 text-info mb-0">{{ stats.total_files }}</div>
+                <small class="text-muted">Key Commands Files</small>
+            </div>
+            <div class="col-md-3">
+                <div class="h2 text-warning mb-0">{{ stats.total_categories }}</div>
+                <small class="text-muted">Categories</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Macros Section -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-fire text-warning"></i> Featured Macros
+            </h2>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for macro in featured_macros %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <a href="{% url 'macros:macro_detail' macro.id %}" class="text-decoration-none">
+                            {{ macro.name|truncatechars:50 }}
+                        </a>
+                    </h6>
+                    
+                    {% if macro.category %}
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">{{ macro.category.name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if macro.key_binding %}
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-keyboard"></i> {{ macro.key_binding }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            by <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}">
+                                {{ macro.keycommands_file.user.username }}
+                            </a>
+                        </small>
+                        
+                        <div class="d-flex align-items-center">
+                            {% if macro.avg_rating %}
+                                <span class="text-warning me-1">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= macro.avg_rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <small class="text-muted">({{ macro.vote_count }})</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between text-muted">
+                        <small><i class="fas fa-eye"></i> {{ macro.view_count }}</small>
+                        <small><i class="fas fa-download"></i> {{ macro.download_count }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-music-slash display-4 text-muted"></i>
+                <h3 class="mt-3">No macros yet</h3>
+                <p class="text-muted">Be the first to share your Cubase macros!</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Your First Macro
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if featured_macros %}
+    <div class="text-center">
+        <a href="{% url 'macros:macro_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-right"></i> View All Macros
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Macros Section -->
+{% if recent_macros %}
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4">
+                    <i class="fas fa-clock text-primary"></i> Recently Added
+                </h2>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for macro in recent_macros %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <a href="{% url 'macros:macro_detail' macro.id %}" class="text-decoration-none">
+                                {{ macro.name|truncatechars:40 }}
+                            </a>
+                        </h6>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if macro.category %}
+                                <span class="badge bg-light text-dark">{{ macro.category.name }}</span>
+                            {% endif %}
+                            <small class="text-muted">{{ macro.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Categories Section -->
+{% if popular_categories %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-folder text-info"></i> Popular Categories
+            </h2>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for category in popular_categories %}
+        <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+            <a href="{% url 'macros:category_detail' category.id %}" class="text-decoration-none">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-folder-open fa-2x text-info mb-2"></i>
+                        <h6 class="card-title small">{{ category.name|truncatechars:20 }}</h6>
+                        <small class="text-muted">{{ category.macro_count }} macros</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="text-center">
+        <a href="{% url 'macros:categories' %}" class="btn btn-outline-info">
+            <i class="fas fa-arrow-right"></i> View All Categories
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Cubase Versions Section -->
+{% if cubase_versions %}
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4">
+                    <i class="fas fa-compact-disc text-success"></i> Supported Cubase Versions
+                </h2>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for version in cubase_versions %}
+            <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <h6 class="card-title mb-1">{{ version.version }}</h6>
+                        <small class="text-muted">{{ version.file_count }} files</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- How It Works Section -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12 text-center mb-5">
+            <h2>
+                <i class="fas fa-question-circle text-primary"></i> How It Works
+            </h2>
+            <p class="lead text-muted">Get started with Cubase Macros Hub in three simple steps</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 text-center mb-4">
+            <div class="mb-3">
+                <i class="fas fa-upload fa-3x text-primary"></i>
+            </div>
+            <h4>1. Upload</h4>
+            <p class="text-muted">
+                Upload your Key Commands.xml file exported from Cubase. 
+                Our system will automatically parse all your macros.
+            </p>
+        </div>
+        
+        <div class="col-md-4 text-center mb-4">
+            <div class="mb-3">
+                <i class="fas fa-share-alt fa-3x text-success"></i>
+            </div>
+            <h4>2. Share</h4>
+            <p class="text-muted">
+                Make your macros public for the community to discover. 
+                Add descriptions and categorize them properly.
+            </p>
+        </div>
+        
+        <div class="col-md-4 text-center mb-4">
+            <div class="mb-3">
+                <i class="fas fa-download fa-3x text-info"></i>
+            </div>
+            <h4>3. Download</h4>
+            <p class="text-muted">
+                Browse and select macros from others. Download a new 
+                Key Commands.xml file with your selected macros.
+            </p>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4">
+        <a href="{% url 'core:help' %}" class="btn btn-outline-primary">
+            <i class="fas fa-question-circle"></i> Learn More
+        </a>
+    </div>
+</div>
+{% endblock %} 

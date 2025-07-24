@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ macro.name }} - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8 mb-4">
+            <!-- Macro Header -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h1 class="h3 mb-1">{{ macro.name }}</h1>
+                            {% if macro.category %}
+                            <div class="mb-2">
+                                <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-white text-decoration-none">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-folder"></i> {{ macro.category.name }}
+                                    </span>
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            {% if user.is_authenticated %}
+                            <button class="btn btn-outline-light btn-sm btn-favorite {% if is_favorited %}active{% endif %}" data-macro-id="{{ macro.id }}">
+                                <i class="{% if is_favorited %}fas{% else %}far{% endif %} fa-heart"></i>
+                                <span class="favorite-count">{{ macro.favorited_by.count }}</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Key Binding -->
+                    {% if macro.key_binding %}
+                    <div class="alert alert-light border">
+                        <i class="fas fa-keyboard text-primary"></i>
+                        <strong>Key Binding:</strong>
+                        <span class="key-binding ms-2">{{ macro.key_binding }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Description -->
+                    {% if macro.description %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-align-left"></i> Description</h5>
+                        <p class="text-muted">{{ macro.description|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Macro Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-info-circle"></i> Details</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Author:</strong></td>
+                                    <td>
+                                        {% if macro.keycommands_file.user.username %}
+                                            <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}">
+                                                {{ macro.keycommands_file.user.profile.display_name|default:macro.keycommands_file.user.username }}
+                                            </a>
+                                        {% else %}
+                                            {{ macro.keycommands_file.user.profile.display_name|default:"Unknown User" }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ macro.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                                {% if macro.keycommands_file.cubase_version %}
+                                <tr>
+                                    <td><strong>Cubase Version:</strong></td>
+                                    <td>{{ macro.keycommands_file.cubase_version.version }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>File:</strong></td>
+                                    <td>
+                                        <a href="{% url 'macros:keycommands_detail' macro.keycommands_file.id %}">
+                                            {{ macro.keycommands_file.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-chart-bar"></i> Statistics</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Views:</strong></td>
+                                    <td>{{ macro.view_count }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Downloads:</strong></td>
+                                    <td>{{ macro.download_count }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Favorites:</strong></td>
+                                    <td>{{ macro.favorited_by.count }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Average Rating:</strong></td>
+                                    <td>
+                                        {% if macro.average_rating %}
+                                        <div class="rating-stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= macro.average_rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <span class="ms-1">({{ macro.vote_count }} vote{{ macro.vote_count|pluralize }})</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">No ratings yet</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        <a href="{% url 'macros:keycommands_detail' macro.keycommands_file.id %}" class="btn btn-primary">
+                            <i class="fas fa-file-alt"></i> View Full File
+                        </a>
+                        
+                        {% if user.is_authenticated and user == macro.keycommands_file.user %}
+                        <a href="{% url 'macros:edit_macro' macro.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Edit Macro
+                        </a>
+                        {% endif %}
+                        
+                        <button class="btn btn-success" onclick="copyKeyBinding()">
+                            <i class="fas fa-copy"></i> Copy Key Binding
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rating and Reviews -->
+            {% if user.is_authenticated %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star"></i> Rate This Macro
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_vote %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        You rated this macro {{ user_vote.rating }} star{{ user_vote.rating|pluralize }} on {{ user_vote.created_at|date:"M d, Y" }}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="vote-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ vote_form.rating.id_for_label }}" class="form-label">
+                                        <i class="fas fa-star"></i> Rating
+                                    </label>
+                                    {{ vote_form.rating }}
+                                    {% if vote_form.rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ vote_form.rating.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ vote_form.comment.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment"></i> Comment (Optional)
+                            </label>
+                            {{ vote_form.comment }}
+                            {% if vote_form.comment.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ vote_form.comment.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-star"></i> 
+                            {% if user_vote %}Update Rating{% else %}Submit Rating{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Reviews -->
+            {% if recent_votes %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments"></i> Recent Reviews
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for vote in recent_votes %}
+                    <div class="review-item {% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <strong class="me-2">{{ vote.user.profile.display_name }}</strong>
+                                    <div class="rating-stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= vote.rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% if vote.comment %}
+                                <p class="text-muted mb-1">{{ vote.comment }}</p>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ vote.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Related Macros -->
+            {% if related_macros %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-layer-group"></i> Related Macros
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for related in related_macros %}
+                    <div class="d-flex align-items-start mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <a href="{% url 'macros:macro_detail' related.id %}" class="text-decoration-none">
+                                    {{ related.name|truncatechars:40 }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                by {{ related.keycommands_file.user.username }}
+                            </small>
+                            {% if related.avg_rating %}
+                            <div class="rating-stars mt-1">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= related.avg_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'macros:macro_list' %}?category={{ macro.category.id }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-folder"></i> More from {{ macro.category.name }}
+                        </a>
+                        
+                        {% if macro.keycommands_file.user.username %}
+                        <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-user"></i> View Author Profile
+                        </a>
+                        {% endif %}
+                        
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:register' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-user-plus"></i> Sign Up to Rate & Favorite
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Share -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-share-alt"></i> Share This Macro
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="share-url" value="{{ request.build_absolute_uri }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyShareUrl()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Copy this link to share the macro</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyKeyBinding() {
+    {% if macro.key_binding %}
+    const keyBinding = "{{ macro.key_binding|escapejs }}";
+    navigator.clipboard.writeText(keyBinding).then(function() {
+        showToast('Key binding copied to clipboard!', 'success');
+    }).catch(function() {
+        showToast('Failed to copy key binding', 'error');
+    });
+    {% else %}
+    showToast('No key binding available', 'warning');
+    {% endif %}
+}
+
+function copyShareUrl() {
+    const shareUrl = document.getElementById('share-url');
+    shareUrl.select();
+    shareUrl.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(shareUrl.value).then(function() {
+        showToast('Share URL copied to clipboard!', 'success');
+    }).catch(function() {
+        // Fallback for older browsers
+        document.execCommand('copy');
+        showToast('Share URL copied to clipboard!', 'success');
+    });
+}
+
+// Initialize favorite button
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteBtn = document.querySelector('.btn-favorite');
+    if (favoriteBtn) {
+        favoriteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const macroId = this.dataset.macroId;
+            toggleFavorite(macroId, this);
+        });
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </h1>
+                    <p class="text-muted mb-0">Update your profile information and preferences</p>
+                </div>
+                <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Profile
+                </a>
+            </div>
+            
+            <!-- Edit Profile Form -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i> Profile Information
+                    </h5>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Basic User Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ user_form.username.id_for_label }}" class="form-label">
+                                        <i class="fas fa-at"></i> Username *
+                                    </label>
+                                    {{ user_form.username }}
+                                    {% if user_form.username.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.username.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if user_form.username.help_text %}
+                                        <div class="form-text">{{ user_form.username.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ user_form.email.id_for_label }}" class="form-label">
+                                        <i class="fas fa-envelope"></i> Email *
+                                    </label>
+                                    {{ user_form.email }}
+                                    {% if user_form.email.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.email.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if user_form.email.help_text %}
+                                        <div class="form-text">{{ user_form.email.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ user_form.first_name.id_for_label }}" class="form-label">
+                                        <i class="fas fa-user"></i> First Name
+                                    </label>
+                                    {{ user_form.first_name }}
+                                    {% if user_form.first_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.first_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ user_form.last_name.id_for_label }}" class="form-label">
+                                        <i class="fas fa-user"></i> Last Name
+                                    </label>
+                                    {{ user_form.last_name }}
+                                    {% if user_form.last_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ user_form.last_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Profile Avatar -->
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-3">
+                                <div class="mb-3">
+                                    {% if user.profile.avatar %}
+                                        <img src="{{ user.profile.avatar.url }}" alt="Current Avatar" class="rounded-circle current-avatar">
+                                    {% else %}
+                                        <div class="avatar-placeholder rounded-circle mx-auto d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-user fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Current Avatar</small>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ profile_form.avatar.id_for_label }}" class="form-label">
+                                        <i class="fas fa-image"></i> Profile Picture
+                                    </label>
+                                    {{ profile_form.avatar }}
+                                    {% if profile_form.avatar.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ profile_form.avatar.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if profile_form.avatar.help_text %}
+                                        <div class="form-text">{{ profile_form.avatar.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bio -->
+                        <div class="mb-3">
+                            <label for="{{ profile_form.bio.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left"></i> Bio
+                            </label>
+                            {{ profile_form.bio }}
+                            {% if profile_form.bio.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ profile_form.bio.errors }}
+                                </div>
+                            {% endif %}
+                            {% if profile_form.bio.help_text %}
+                                <div class="form-text">{{ profile_form.bio.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Location and Website -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ profile_form.location.id_for_label }}" class="form-label">
+                                        <i class="fas fa-map-marker-alt"></i> Location
+                                    </label>
+                                    {{ profile_form.location }}
+                                    {% if profile_form.location.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ profile_form.location.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if profile_form.location.help_text %}
+                                        <div class="form-text">{{ profile_form.location.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ profile_form.website.id_for_label }}" class="form-label">
+                                        <i class="fas fa-link"></i> Website
+                                    </label>
+                                    {{ profile_form.website }}
+                                    {% if profile_form.website.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ profile_form.website.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if profile_form.website.help_text %}
+                                        <div class="form-text">{{ profile_form.website.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cubase Version -->
+                        <div class="mb-4">
+                            <label for="{{ profile_form.preferred_cubase_version.id_for_label }}" class="form-label">
+                                <i class="fas fa-compact-disc"></i> Preferred Cubase Version
+                            </label>
+                            {{ profile_form.preferred_cubase_version }}
+                            {% if profile_form.preferred_cubase_version.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ profile_form.preferred_cubase_version.errors }}
+                                </div>
+                            {% endif %}
+                            {% if profile_form.preferred_cubase_version.help_text %}
+                                <div class="form-text">{{ profile_form.preferred_cubase_version.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Privacy Settings -->
+                        <h6 class="mb-3">
+                            <i class="fas fa-shield-alt"></i> Privacy Settings
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ profile_form.show_email }}
+                                    <label class="form-check-label" for="{{ profile_form.show_email.id_for_label }}">
+                                        Show email in public profile
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    {{ profile_form.show_real_name }}
+                                    <label class="form-check-label" for="{{ profile_form.show_real_name.id_for_label }}">
+                                        Show real name in public profile
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ profile_form.allow_contact }}
+                                    <label class="form-check-label" for="{{ profile_form.allow_contact.id_for_label }}">
+                                        Allow others to contact me
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    {{ profile_form.show_activity }}
+                                    <label class="form-check-label" for="{{ profile_form.show_activity.id_for_label }}">
+                                        Show my activity publicly
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Notification Settings -->
+                        <h6 class="mb-3">
+                            <i class="fas fa-bell"></i> Notification Preferences
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ profile_form.email_notifications }}
+                                    <label class="form-check-label" for="{{ profile_form.email_notifications.id_for_label }}">
+                                        Email notifications
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    {{ profile_form.macro_updates }}
+                                    <label class="form-check-label" for="{{ profile_form.macro_updates.id_for_label }}">
+                                        Notify about macro updates
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ profile_form.weekly_digest }}
+                                    <label class="form-check-label" for="{{ profile_form.weekly_digest.id_for_label }}">
+                                        Weekly digest emails
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    {{ profile_form.marketing_emails }}
+                                    <label class="form-check-label" for="{{ profile_form.marketing_emails.id_for_label }}">
+                                        Marketing and promotional emails
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between pt-3">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Password Change Section -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-key"></i> Change Password
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        To change your password, use the link below. You'll receive an email with instructions.
+                    </p>
+                    
+                    <a href="{% url 'accounts:password_reset' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-key"></i> Change Password
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Account Actions -->
+            <div class="card mt-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="text-danger mb-1">Delete Account</h6>
+                            <p class="text-muted mb-0">
+                                Permanently delete your account and all associated data. This action cannot be undone.
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-danger" onclick="confirmAccountDeletion()">
+                                <i class="fas fa-trash"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.current-avatar {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+.card {
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmAccountDeletion() {
+    if (confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently delete all your uploads, favorites, and profile data.')) {
+        if (confirm('This is your final warning. Type "DELETE" in the prompt that follows to confirm account deletion.')) {
+            const confirmation = prompt('Type "DELETE" to confirm account deletion:');
+            if (confirmation === 'DELETE') {
+                // Create a form to handle account deletion
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{% url "accounts:delete_account" %}';
+                form.innerHTML = `
+                    {% csrf_token %}
+                    <input type="hidden" name="confirm_deletion" value="true">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                alert('Account deletion cancelled. You must type "DELETE" exactly to confirm.');
+            }
+        }
+    }
+}
+
+// Preview uploaded avatar
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('{{ profile_form.avatar.id_for_label }}');
+    const currentAvatar = document.querySelector('.current-avatar, .avatar-placeholder');
+    
+    if (avatarInput && currentAvatar) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (currentAvatar.tagName === 'IMG') {
+                        currentAvatar.src = e.target.result;
+                    } else {
+                        // Replace placeholder with actual image
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'rounded-circle current-avatar';
+                        img.alt = 'Avatar Preview';
+                        currentAvatar.replaceWith(img);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

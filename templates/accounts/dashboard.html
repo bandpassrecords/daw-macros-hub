@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-tachometer-alt"></i> Welcome back, {{ user.profile.display_name }}!
+                    </h1>
+                    <p class="text-muted mb-0">Here's what's happening with your macros</p>
+                </div>
+                <div>
+                    <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload New File
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-upload fa-2x mb-2"></i>
+                    <h3 class="mb-1">{{ total_uploads }}</h3>
+                    <small>Total Uploads</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-eye fa-2x mb-2"></i>
+                    <h3 class="mb-1">{{ total_public_macros }}</h3>
+                    <small>Public Macros</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-heart fa-2x mb-2"></i>
+                    <h3 class="mb-1">{{ total_favorites }}</h3>
+                    <small>Favorites</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-star fa-2x mb-2"></i>
+                    <h3 class="mb-1">{{ profile.total_downloads }}</h3>
+                    <small>Downloads</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-upload d-block mb-1"></i>
+                                <small>Upload</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'macros:my_keycommands' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-file-alt d-block mb-1"></i>
+                                <small>My Files</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-user d-block mb-1"></i>
+                                <small>Profile</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'macros:macro_list' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-search d-block mb-1"></i>
+                                <small>Browse</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'macros:popular_macros' %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-fire d-block mb-1"></i>
+                                <small>Popular</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a href="{% url 'accounts:edit_profile' %}" class="btn btn-outline-dark w-100">
+                                <i class="fas fa-cog d-block mb-1"></i>
+                                <small>Settings</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Recent Uploads -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Recent Uploads
+                    </h5>
+                    <a href="{% url 'macros:my_keycommands' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_uploads %}
+                        {% for file in recent_uploads %}
+                        <div class="d-flex align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="fas fa-file-alt fa-2x text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'macros:keycommands_detail' file.id %}" class="text-decoration-none">
+                                        {{ file.name|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {% if file.is_public %}
+                                            <span class="badge bg-success">Public</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Private</span>
+                                        {% endif %}
+                                        {% if file.cubase_version %}
+                                            <span class="ms-1">{{ file.cubase_version.version }}</span>
+                                        {% endif %}
+                                    </small>
+                                    <small class="text-muted">{{ file.created_at|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h6>No uploads yet</h6>
+                            <p class="text-muted mb-3">Start by uploading your first Key Commands file!</p>
+                            <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload Now
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Favorites -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-heart"></i> Recent Favorites
+                    </h5>
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-danger">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_favorites %}
+                        {% for favorite in recent_favorites %}
+                        <div class="d-flex align-items-center mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="fas fa-heart fa-2x text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'macros:macro_detail' favorite.macro.id %}" class="text-decoration-none">
+                                        {{ favorite.macro.name|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {% if favorite.macro.category %}
+                                            <span class="badge bg-light text-dark">{{ favorite.macro.category.name }}</span>
+                                        {% endif %}
+                                        by {{ favorite.macro.keycommands_file.user.username }}
+                                    </small>
+                                    <small class="text-muted">{{ favorite.created_at|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-heart-broken fa-3x text-muted mb-3"></i>
+                            <h6>No favorites yet</h6>
+                            <p class="text-muted mb-3">Browse macros and add them to your favorites!</p>
+                            <a href="{% url 'macros:macro_list' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i> Browse Macros
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Popular Macros from User -->
+    {% if popular_macros %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trophy"></i> Your Popular Macros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for macro in popular_macros %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="card border">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'macros:macro_detail' macro.id %}" class="text-decoration-none">
+                                            {{ macro.name|truncatechars:30 }}
+                                        </a>
+                                    </h6>
+                                    {% if macro.category %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-secondary">{{ macro.category.name }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-eye"></i> {{ macro.view_count }}
+                                            <i class="fas fa-download ms-2"></i> {{ macro.download_count }}
+                                        </small>
+                                        {% if macro.average_rating %}
+                                        <div class="rating-stars">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= macro.average_rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card {
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: scale(1.05);
+}
+
+.quick-action-btn {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+{% endblock %} 
