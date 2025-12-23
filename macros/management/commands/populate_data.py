@@ -34,11 +34,19 @@ class Command(BaseCommand):
         )
 
     def create_cubase_versions(self):
-        """Create Cubase major versions from 4 to 15"""
+        """Create Cubase major versions from 4 to 15, plus Unspecified"""
         # Remove "Cubase 4" if it exists (we only want "Cubase 4 or older")
         CubaseVersion.objects.filter(version='Cubase 4').delete()
         
         versions = []
+        
+        # Add "Unspecified" as the default option (with major=0 so it sorts last)
+        versions.append({
+            'version': 'Unspecified',
+            'major': 0,
+            'minor': 0,
+            'patch': 0,
+        })
         
         # Add "Cubase 4 or older" option
         versions.append({
@@ -57,8 +65,8 @@ class Command(BaseCommand):
                 'patch': 0,
             })
         
-        # Sort by major version (descending) to ensure proper ordering
-        versions.sort(key=lambda x: x['major'], reverse=True)
+        # Sort by major version (descending), but keep Unspecified at the beginning
+        versions.sort(key=lambda x: (x['major'] != 0, -x['major'] if x['major'] != 0 else 0))
 
         for version_data in versions:
             version, created = CubaseVersion.objects.get_or_create(

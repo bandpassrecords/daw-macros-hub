@@ -20,6 +20,8 @@ class CubaseVersion(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        # Order: Unspecified (major=0) first, then others by version descending
+        # We'll use custom ordering in forms/views to put Unspecified first
         ordering = ['-major_version', '-minor_version', '-patch_version']
     
     def __str__(self):

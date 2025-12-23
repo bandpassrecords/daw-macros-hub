@@ -76,14 +76,14 @@
                                 <i class="fas fa-globe"></i> Public
                             </span>
                         {% endif %}
-                            </span>
-                        {% endif %}
-                        
-                        {% if file.cubase_version %}
-                            <span class="badge bg-info">
-                                <i class="fas fa-compact-disc"></i> {{ file.cubase_version.version }}
-                            </span>
-                        {% endif %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-compact-disc"></i> 
+                            {% if file.cubase_version %}
+                                {{ file.cubase_version.version }}
+                            {% else %}
+                                Unspecified
+                            {% endif %}
+                        </span>
                     </div>
                     
                     <!-- Description -->

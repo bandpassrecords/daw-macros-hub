@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Case, When, IntegerField
 from .models import KeyCommandsFile, Macro, MacroVote, MacroCollection, CubaseVersion
 from .utils import KeyCommandsParser
 
@@ -19,7 +20,7 @@ class KeyCommandsFileForm(forms.ModelForm):
     
     class Meta:
         model = KeyCommandsFile
-        fields = ['name', 'description', 'cubase_version', 'is_private']
+        fields = ['name', 'description', 'cubase_version']
         # Note: 'file' is NOT in fields - we only use it for parsing, never store it
         widgets = {
             'name': forms.TextInput(attrs={
@@ -32,23 +33,34 @@ class KeyCommandsFileForm(forms.ModelForm):
                 'placeholder': 'Describe your Key Commands setup (optional)'
             }),
             'cubase_version': forms.Select(attrs={'class': 'form-control'}),
-            'is_private': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         help_texts = {
             'name': 'Give your Macros file a descriptive name.',
             'description': 'Optional description of what makes this setup special.',
             'cubase_version': 'Select the Cubase version this file was created with.',
-            'is_private': 'Check this box to keep your file private (only visible to you). By default, files are public.',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cubase_version'].queryset = CubaseVersion.objects.all()
-        self.fields['cubase_version'].empty_label = "Select Cubase Version"
+        # Order queryset: Unspecified (major=0) first, then others by version descending
+        queryset = CubaseVersion.objects.all().annotate(
+            sort_order=Case(
+                When(major_version=0, then=0),
+                default=1,
+                output_field=IntegerField()
+            )
+        ).order_by('sort_order', '-major_version', '-minor_version', '-patch_version')
+        self.fields['cubase_version'].queryset = queryset
+        self.fields['cubase_version'].empty_label = None  # Remove empty label since we have "Unspecified"
         
-        # Ensure is_private defaults to False (unchecked = public)
+        # Set default to "Unspecified" if creating new instance
         if not self.instance or not self.instance.pk:
-            self.fields['is_private'].initial = False
+            try:
+                unspecified_version = CubaseVersion.objects.get(version='Unspecified')
+                self.fields['cubase_version'].initial = unspecified_version
+            except CubaseVersion.DoesNotExist:
+                pass  # If Unspecified doesn't exist yet, no default
+        
     
     def clean_file(self):
         file = self.cleaned_data.get('file')

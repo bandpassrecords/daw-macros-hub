@@ -19,6 +19,7 @@ urlpatterns = [
     path('upload/save-macros/', views.save_selected_macros, name='save_selected_macros'),
     path('my-files/', views.my_keycommands, name='my_keycommands'),
     path('keycommands/<uuid:file_id>/', views.keycommands_detail, name='keycommands_detail'),
+    path('keycommands/<uuid:file_id>/delete/', views.delete_keycommands_file, name='delete_keycommands_file'),
     
     # Downloads
     path('download/<uuid:file_id>/', views.download_keycommands, name='download_keycommands'),

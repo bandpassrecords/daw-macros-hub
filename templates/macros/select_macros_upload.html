@@ -40,6 +40,19 @@
                             </div>
                         </div>
                         
+                        <!-- Privacy Controls -->
+                        <div class="alert alert-info mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="make-all-private">
+                                <label class="form-check-label" for="make-all-private">
+                                    <i class="fas fa-lock"></i> Make all selected macros private
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-info-circle"></i> You can also set privacy individually for each macro below. By default, macros are public.
+                            </small>
+                        </div>
+                        
                         <!-- Macros by Category -->
                         {% for category_name, macros in macros_by_category.items %}
                         <div class="mb-4">
@@ -53,7 +66,7 @@
                                 <div class="col-md-6 col-lg-4">
                                     <div class="card macro-selection-card h-100">
                                         <div class="card-body">
-                                            <div class="form-check">
+                                            <div class="form-check mb-2">
                                                 <input class="form-check-input macro-checkbox" 
                                                        type="checkbox" 
                                                        name="selected_macros" 
@@ -80,6 +93,17 @@
                                                             {% endif %}
                                                         </div>
                                                     </div>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input macro-private-checkbox" 
+                                                       type="checkbox" 
+                                                       name="private_macros" 
+                                                       value="{{ macro.index }}" 
+                                                       id="private_{{ macro.index }}"
+                                                       data-macro-index="{{ macro.index }}">
+                                                <label class="form-check-label small" for="private_{{ macro.index }}">
+                                                    <i class="fas fa-lock"></i> Make private
                                                 </label>
                                             </div>
                                         </div>
@@ -111,8 +135,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.macro-checkbox');
+    const privateCheckboxes = document.querySelectorAll('.macro-private-checkbox');
     const selectAllBtn = document.getElementById('select-all');
     const deselectAllBtn = document.getElementById('deselect-all');
+    const makeAllPrivateBtn = document.getElementById('make-all-private');
     const selectedCount = document.getElementById('selected-count');
     const saveBtn = document.getElementById('save-btn');
     const form = document.getElementById('macro-selection-form');
@@ -129,6 +155,18 @@ document.addEventListener('DOMContentLoaded', function() {
             saveBtn.classList.remove('btn-primary');
             saveBtn.classList.add('btn-secondary');
         }
+        
+        // Enable/disable private checkboxes based on selection
+        checkboxes.forEach(checkbox => {
+            const macroIndex = checkbox.value;
+            const privateCheckbox = document.getElementById('private_' + macroIndex);
+            if (privateCheckbox) {
+                privateCheckbox.disabled = !checkbox.checked;
+                if (!checkbox.checked) {
+                    privateCheckbox.checked = false;
+                }
+            }
+        });
     }
     
     // Update count on checkbox change
@@ -145,7 +183,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Deselect all
     deselectAllBtn.addEventListener('click', function() {
         checkboxes.forEach(cb => cb.checked = false);
+        privateCheckboxes.forEach(cb => cb.checked = false);
         updateSelectionCount();
+    });
+    
+    // Make all selected private
+    makeAllPrivateBtn.addEventListener('change', function() {
+        const selectedCheckboxes = document.querySelectorAll('.macro-checkbox:checked');
+        selectedCheckboxes.forEach(checkbox => {
+            const macroIndex = checkbox.value;
+            const privateCheckbox = document.getElementById('private_' + macroIndex);
+            if (privateCheckbox) {
+                privateCheckbox.checked = makeAllPrivateBtn.checked;
+            }
+        });
     });
     
     // Form submission
@@ -174,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .macro-selection-card:hover {
     border-color: var(--primary);
-    transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
 
@@ -186,6 +236,20 @@ document.addEventListener('DOMContentLoaded', function() {
 .form-check-input:checked {
     background-color: var(--primary);
     border-color: var(--primary);
+}
+
+.macro-private-checkbox {
+    margin-top: 0.5rem;
+}
+
+.macro-private-checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.macro-private-checkbox:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>
 {% endblock %}

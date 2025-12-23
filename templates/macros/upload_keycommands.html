@@ -82,7 +82,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="{{ form.cubase_version.id_for_label }}" class="form-label">
-                                        <i class="fas fa-compact-disc"></i> Cubase Version
+                                        <i class="fas fa-compact-disc"></i> Version
                                     </label>
                                     {{ form.cubase_version }}
                                     {% if form.cubase_version.errors %}
@@ -146,18 +146,6 @@
                             {% if form.file.help_text %}
                                 <div class="form-text mt-2">{{ form.file.help_text }}</div>
                             {% endif %}
-                        </div>
-                        
-                        <div class="mb-4">
-                            <div class="form-check">
-                                {{ form.is_private }}
-                                <label class="form-check-label" for="{{ form.is_private.id_for_label }}">
-                                    <i class="fas fa-lock"></i> Make this file private
-                                </label>
-                                {% if form.is_private.help_text %}
-                                    <div class="form-text">{{ form.is_private.help_text }}</div>
-                                {% endif %}
-                            </div>
                         </div>
                         
                         {% if form.non_field_errors %}

@@ -26,6 +26,10 @@
                             <span class="badge bg-info">
                                 <i class="fas fa-compact-disc"></i> {{ keycommands_file.cubase_version.version }}
                             </span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-compact-disc"></i> Unspecified
+                            </span>
                         {% endif %}
                     </div>
                 </div>
@@ -100,9 +104,13 @@
                                     <td>{{ keycommands_file.updated_at|date:"M d, Y" }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Storage:</strong></td>
+                                    <td><strong>Version:</strong></td>
                                     <td>
-                                        <span class="text-muted">Only macro snippets stored (original file not saved)</span>
+                                        {% if keycommands_file.cubase_version %}
+                                            {{ keycommands_file.cubase_version.version }}
+                                        {% else %}
+                                            Unspecified
+                                        {% endif %}
                                     </td>
                                 </tr>
                             </table>

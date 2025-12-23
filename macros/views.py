@@ -199,12 +199,19 @@ def upload_keycommands(request):
                 if not all_macros:
                     raise ValueError("No valid macros found in the uploaded file")
                 
+                # Get cubase version (default to "Unspecified" if not selected)
+                cubase_version = form.cleaned_data.get('cubase_version')
+                if not cubase_version:
+                    try:
+                        cubase_version = CubaseVersion.objects.get(version='Unspecified')
+                    except CubaseVersion.DoesNotExist:
+                        cubase_version = None
+                
                 # Store parsed data in session for the selection step
                 request.session['upload_data'] = {
                     'name': form.cleaned_data['name'],
                     'description': form.cleaned_data['description'],
-                    'cubase_version_id': form.cleaned_data['cubase_version'].id if form.cleaned_data['cubase_version'] else None,
-                    'is_private': form.cleaned_data.get('is_private', False),
+                    'cubase_version_id': cubase_version.id if cubase_version else None,
                     'macros': all_macros,
                     'file_name': uploaded_file.name,
                 }
@@ -276,8 +283,12 @@ def select_macros_upload(request):
                 'total_macros': len(upload_data['macros']),
             })
         
-        # Store selected indices in session for the save step
+        # Get privacy settings for each selected macro
+        private_macro_indices = set(request.POST.getlist('private_macros'))
+        
+        # Store selected indices and privacy settings in session for the save step
         request.session['selected_macro_indices'] = [int(idx) for idx in selected_indices]
+        request.session['private_macro_indices'] = [int(idx) for idx in private_macro_indices if idx in selected_indices]
         
         # Redirect to save view
         return redirect('macros:save_selected_macros')
@@ -297,6 +308,7 @@ def save_selected_macros(request):
     # Get data from session
     upload_data = request.session.get('upload_data')
     selected_indices = request.session.get('selected_macro_indices')
+    private_macro_indices = request.session.get('private_macro_indices', [])
     
     if not upload_data or not selected_indices:
         messages.error(request, 'Session expired. Please upload your file again.')
@@ -304,27 +316,43 @@ def save_selected_macros(request):
     
     try:
         with transaction.atomic():
-            # Create KeyCommandsFile without saving the file
+            # Get cubase version (default to "Unspecified" if not provided)
+            cubase_version_id = upload_data.get('cubase_version_id')
+            if not cubase_version_id:
+                try:
+                    unspecified_version = CubaseVersion.objects.get(version='Unspecified')
+                    cubase_version_id = unspecified_version.id
+                except CubaseVersion.DoesNotExist:
+                    cubase_version_id = None
+            
+            # Create KeyCommandsFile without saving the file (default to public)
             keycommands_file = KeyCommandsFile(
                 user=request.user,
                 name=upload_data['name'],
                 description=upload_data['description'],
-                cubase_version_id=upload_data['cubase_version_id'],
-                is_private=upload_data.get('is_private', False),
+                cubase_version_id=cubase_version_id,
+                is_private=False,  # File is always public, privacy is set per macro
                 file=None  # No file stored
             )
             keycommands_file.save()
             
             logger.info(f"Created KeyCommandsFile {keycommands_file.id} without file storage")
             
-            # Get selected macros
-            selected_macros = [upload_data['macros'][idx] for idx in selected_indices if 0 <= idx < len(upload_data['macros'])]
+            # Convert private_macro_indices to set for fast lookup
+            private_indices_set = set(int(idx) for idx in private_macro_indices)
+            
+            # Get selected macros with their indices
+            selected_macros_with_indices = []
+            for idx in selected_indices:
+                idx_int = int(idx)
+                if 0 <= idx_int < len(upload_data['macros']):
+                    selected_macros_with_indices.append((idx_int, upload_data['macros'][idx_int]))
             
             created_macros = 0
             skipped_macros = 0
             
             # Process each selected macro
-            for macro_data in selected_macros:
+            for idx_int, macro_data in selected_macros_with_indices:
                 try:
                     if not macro_data.get('name'):
                         skipped_macros += 1
@@ -352,6 +380,9 @@ def save_selected_macros(request):
                             else:
                                 description = f"Executes: {', '.join(command_names[:3])} and {len(command_names) - 3} more commands"
                     
+                    # Determine if this macro should be private
+                    macro_is_private = idx_int in private_indices_set
+                    
                     # Create macro with both XML snippets
                     macro, created = Macro.objects.update_or_create(
                         keycommands_file=keycommands_file,
@@ -363,7 +394,7 @@ def save_selected_macros(request):
                             'commands_json': commands,
                             'xml_snippet': macro_data.get('xml_snippet', ''),
                             'reference_snippet': macro_data.get('reference_snippet', ''),
-                            'is_private': keycommands_file.is_private,  # Macro uses is_private, same as file's is_private
+                            'is_private': macro_is_private,  # Use individual macro privacy setting
                         }
                     )
                     
@@ -387,6 +418,7 @@ def save_selected_macros(request):
             # Clear session data
             request.session.pop('upload_data', None)
             request.session.pop('selected_macro_indices', None)
+            request.session.pop('private_macro_indices', None)
             
             # Success message
             success_message = f"Successfully saved {created_macros} macro{'s' if created_macros != 1 else ''}"
@@ -781,6 +813,25 @@ def my_keycommands(request):
     }
     
     return render(request, 'macros/my_keycommands.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_keycommands_file(request, file_id):
+    """Delete a Key Commands file"""
+    keycommands_file = get_object_or_404(KeyCommandsFile, id=file_id)
+    
+    # Check permissions - only the owner can delete
+    if keycommands_file.user != request.user:
+        messages.error(request, 'You do not have permission to delete this file.')
+        return redirect('macros:my_keycommands')
+    
+    # Delete the file (this will cascade delete all associated macros)
+    file_name = keycommands_file.name
+    keycommands_file.delete()
+    
+    messages.success(request, f'File "{file_name}" has been deleted successfully.')
+    return redirect('macros:my_keycommands')
 
 
 @login_required

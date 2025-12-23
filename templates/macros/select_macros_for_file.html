@@ -28,7 +28,7 @@
                             {% if keycommands_file.cubase_version %}
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-compact-disc text-primary me-2"></i>
-                                <strong>Cubase Version:</strong> {{ keycommands_file.cubase_version.version }}
+                                <strong>Version:</strong> {{ keycommands_file.cubase_version.version }}
                             </div>
                             {% endif %}
                         </div>
@@ -260,7 +260,6 @@
 }
 
 .macro-card:hover {
-    transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 

@@ -148,13 +148,12 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">
                                         {% if file.is_private %}
-                                            <span class="badge bg-secondary">Private</span>
+                                        <span class="badge bg-secondary">Private</span>
                                         {% else %}
-                                            <span class="badge bg-success">Public</span>
-                                        {% endif %}
+                                        <span class="badge bg-success">Public</span>
                                         {% endif %}
                                         {% if file.cubase_version %}
-                                            <span class="ms-1">{{ file.cubase_version.version }}</span>
+                                        <span class="ms-1">{{ file.cubase_version.version }}</span>
                                         {% endif %}
                                     </small>
                                     <small class="text-muted">{{ file.created_at|timesince }} ago</small>
@@ -289,17 +288,11 @@
     transition: transform 0.2s ease-in-out;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-}
 
 .stat-card {
     transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-    transform: scale(1.05);
-}
 
 .quick-action-btn {
     aspect-ratio: 1;
