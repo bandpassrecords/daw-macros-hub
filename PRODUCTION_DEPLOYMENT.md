@@ -1,18 +1,21 @@
-# Production Deployment Guide
+# Production Deployment Guide - CentOS Stream 10
 
-This guide explains how to deploy your Django application to production with the production-ready settings.
+This guide explains how to deploy your Django application to production on **CentOS Stream 10** with the production-ready settings.
 
 **Related Guides:**
+- `CENTOS_STREAM_10_SETUP.md` - Complete CentOS Stream 10 specific setup guide (SELinux, firewalld, etc.)
+- `SETTINGS_STRUCTURE.md` - Settings structure and environment switching guide
 - `SYSTEMD_SERVICE_SETUP.md` - Detailed systemd service setup for auto-start on boot and cron jobs
 - `LETS_ENCRYPT_SETUP.md` - Complete Let's Encrypt SSL certificate setup
 - `ENV_SETUP_INSTRUCTIONS.md` - Environment variables configuration
 
 ## Prerequisites
 
-1. Python 3.8+ installed
-2. All dependencies installed: `pip install -r requirements.txt`
-3. Database migrations run: `python manage.py migrate`
-4. Static files collected: `python manage.py collectstatic`
+1. **CentOS Stream 10** server with root/sudo access
+2. Python 3.8+ installed (CentOS Stream 10 comes with Python 3.12)
+3. All dependencies installed: `pip install -r requirements.txt`
+4. Database migrations run: `python manage.py migrate`
+5. Static files collected: `python manage.py collectstatic`
 
 ## Environment Variables Setup
 
@@ -69,7 +72,9 @@ Copy the output and use it as your `SECRET_KEY` in the `.env` file.
 ### 1. Collect Static Files
 
 ```bash
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
+# Or if using virtual environment:
+# python manage.py collectstatic --noinput
 ```
 
 This will collect all static files into the `staticfiles` directory for WhiteNoise to serve.
@@ -77,13 +82,17 @@ This will collect all static files into the `staticfiles` directory for WhiteNoi
 ### 2. Run Migrations
 
 ```bash
-python manage.py migrate
+python3 manage.py migrate
+# Or if using virtual environment:
+# python manage.py migrate
 ```
 
 ### 3. Create Superuser (if needed)
 
 ```bash
-python manage.py createsuperuser
+python3 manage.py createsuperuser
+# Or if using virtual environment:
+# python manage.py createsuperuser
 ```
 
 ### 4. Update Site Domain
@@ -97,7 +106,9 @@ python manage.py createsuperuser
 ### 5. Test the Application
 
 ```bash
-python manage.py runserver
+python3 manage.py runserver
+# Or if using virtual environment:
+# python manage.py runserver
 ```
 
 Visit your site and test:
@@ -109,11 +120,29 @@ Visit your site and test:
 
 ## Production Server Setup
 
-### Option 1: Using Gunicorn + Nginx (Recommended)
+### Option 1: Using Gunicorn + Nginx (Recommended for CentOS Stream 10)
 
-1. **Install Gunicorn:**
+1. **Install System Dependencies:**
    ```bash
-   pip install gunicorn
+   # Update system packages
+   sudo dnf update -y
+   
+   # Install Python and development tools
+   sudo dnf install -y python3 python3-pip python3-devel gcc
+   
+   # Install Nginx
+   sudo dnf install -y nginx
+   
+   # Install Git (if needed)
+   sudo dnf install -y git
+   ```
+
+2. **Install Gunicorn:**
+   ```bash
+   pip3 install gunicorn
+   # Or if using virtual environment:
+   # source venv/bin/activate
+   # pip install gunicorn
    ```
 
 2. **Create Systemd Service for Auto-Start on Boot:**
@@ -130,8 +159,8 @@ Visit your site and test:
       After=network.target
 
       [Service]
-      User=www-data
-      Group=www-data
+      User=nginx
+      Group=nginx
       WorkingDirectory=/path/to/your/project/cubase-macros-shop
       Environment="PATH=/path/to/venv/bin"
       EnvironmentFile=/path/to/your/project/.env
@@ -150,12 +179,15 @@ Visit your site and test:
       WantedBy=multi-user.target
       ```
       
-      **Important:** Replace `/path/to/your/project` and `/path/to/venv` with your actual paths!
+      **Important:** 
+      - Replace `/path/to/your/project` and `/path/to/venv` with your actual paths!
+      - CentOS uses `nginx` user/group instead of `www-data`
    
    c. **Create log directory:**
       ```bash
       sudo mkdir -p /var/log/gunicorn
-      sudo chown www-data:www-data /var/log/gunicorn
+      sudo chown nginx:nginx /var/log/gunicorn
+      sudo chmod 755 /var/log/gunicorn
       ```
    
    d. **Reload systemd and enable service:**
@@ -178,12 +210,9 @@ Visit your site and test:
    
    a. **Install Certbot:**
       ```bash
-      # Ubuntu/Debian
-      sudo apt update
-      sudo apt install certbot python3-certbot-nginx
-      
-      # CentOS/RHEL
-      sudo yum install certbot python3-certbot-nginx
+      # CentOS Stream 10
+      sudo dnf install -y epel-release
+      sudo dnf install -y certbot python3-certbot-nginx
       ```
    
    b. **Obtain SSL Certificate:**
@@ -257,14 +286,34 @@ Visit your site and test:
    }
    ```
 
-6. **Enable Site and Restart Nginx:**
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/cms.bandpassrecords.com /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl restart nginx
-   ```
+6. **Configure and Start Nginx (CentOS Stream 10):**
    
-   **Note:** If you used Certbot in step 4, it may have already created and enabled the site configuration automatically.
+   **Note:** CentOS/RHEL uses a different Nginx configuration structure than Debian/Ubuntu.
+   
+   a. **Create Nginx configuration:**
+      ```bash
+      sudo nano /etc/nginx/conf.d/cms.bandpassrecords.com.conf
+      ```
+   
+   b. **Add the configuration** (same as shown in step 5 above)
+   
+   c. **Test and start Nginx:**
+      ```bash
+      # Test configuration
+      sudo nginx -t
+      
+      # Start and enable Nginx
+      sudo systemctl start nginx
+      sudo systemctl enable nginx
+      
+      # Check status
+      sudo systemctl status nginx
+      ```
+   
+   **Note:** 
+   - CentOS uses `/etc/nginx/conf.d/` instead of `sites-available/sites-enabled`
+   - If you used Certbot, it may have already created the configuration
+   - Certbot on CentOS typically creates files in `/etc/nginx/conf.d/`
 
 ## Let's Encrypt SSL Certificate Setup
 
@@ -275,16 +324,16 @@ Visit your site and test:
    - Port 80 (HTTP) must be open and accessible
    - Nginx must be installed and running
 
-2. **Install Certbot:**
+2. **Install Certbot on CentOS Stream 10:**
    ```bash
-   # Ubuntu/Debian
-   sudo apt update
-   sudo apt install certbot python3-certbot-nginx
+   # Install EPEL repository (required for certbot)
+   sudo dnf install -y epel-release
    
-   # CentOS/RHEL/Fedora
-   sudo yum install certbot python3-certbot-nginx
-   # or for newer versions:
-   sudo dnf install certbot python3-certbot-nginx
+   # Install Certbot and Nginx plugin
+   sudo dnf install -y certbot python3-certbot-nginx
+   
+   # Verify installation
+   certbot --version
    ```
 
 3. **Obtain Certificate:**
