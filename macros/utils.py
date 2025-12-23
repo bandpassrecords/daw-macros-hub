@@ -338,45 +338,27 @@ def create_keycommands_xml(selected_macros: List[Dict], base_structure: Optional
     return full_xml
 
 
-def create_keycommands_xml_with_embedded_macros(keycommands_file, selected_macros):
+def create_keycommands_xml_with_embedded_macros(existing_root, selected_macros):
     """
-    Create a new Key Commands XML file by embedding selected macros into an existing file
+    Embed selected macros into an existing Key Commands XML root element.
     
     This function:
     1. Adds macro definitions to <list name="Macros" type="list">
     2. Adds macro references to <list name="Commands" type="list"> under the Macro item
     
     Args:
-        keycommands_file: The user's existing KeyCommandsFile object
+        existing_root: The root ElementTree element of the user's Key Commands.xml file.
         selected_macros: QuerySet of Macro objects to embed
         
     Returns:
         Generated XML content as string with embedded macros
     """
     try:
-        # Files are never stored - always create a new XML structure from scratch
-        root = ET.Element("KeyCommands")
-        # Create Categories list structure
-        categories_list = ET.SubElement(root, "list")
-        categories_list.set("name", "Categories")
-        categories_list.set("type", "list")
-        
-        # Create Macro category item
-        macro_category_item = ET.SubElement(categories_list, "item")
-        ET.SubElement(macro_category_item, "string", name="Name", value="Macro")
-        commands_list = ET.SubElement(macro_category_item, "list")
-        commands_list.set("name", "Commands")
-        commands_list.set("type", "list")
+        root = existing_root
         
         # STEP 1: Find or create the Macros list for macro definitions
-        macros_list = None
-        
-        # Look for existing Macros section
-        existing_macros_lists = root.findall('list[@name="Macros"]')
-        if existing_macros_lists:
-            macros_list = existing_macros_lists[0]
-        else:
-            # Create Macros list if it doesn't exist
+        macros_list = root.find('list[@name="Macros"]')
+        if macros_list is None:
             macros_list = ET.SubElement(root, "list")
             macros_list.set("name", "Macros")
             macros_list.set("type", "list")
@@ -400,29 +382,28 @@ def create_keycommands_xml_with_embedded_macros(keycommands_file, selected_macro
         commands_list = None
 
         # Navigate to the categories list
-        categories_list = root.find('list[@name="Categories"][@type="list"]')
+        categories_list = root.find('list[@name="Categories"]')
 
         if categories_list is not None:
+            # Find or create Macro category item
+            macro_category_item = None
             for item in categories_list.findall('item'):
                 name_string = item.find('string[@name="Name"]')
                 if name_string is not None and name_string.attrib.get('value') == "Macro":
-                    commands_list = item.find('list[@name="Commands"][@type="list"]')
-                    if commands_list is not None:
-                        break
+                    macro_category_item = item
+                    break
+            
+            if macro_category_item is None:
+                macro_category_item = ET.SubElement(categories_list, "item")
+                ET.SubElement(macro_category_item, "string", name="Name", value="Macro")
+            
+            commands_list = macro_category_item.find('list[@name="Commands"]')
+            if commands_list is None:
+                commands_list = ET.SubElement(macro_category_item, "list")
+                commands_list.set("name", "Commands")
+                commands_list.set("type", "list")
         
-        # If commands_list doesn't exist, it was created in the else block above
-        if commands_list is None and not keycommands_file.file:
-            # Find the commands_list we created
-            categories_list = root.find('list[@name="Categories"][@type="list"]')
-            if categories_list is not None:
-                for item in categories_list.findall('item'):
-                    name_string = item.find('string[@name="Name"]')
-                    if name_string is not None and name_string.attrib.get('value') == "Macro":
-                        commands_list = item.find('list[@name="Commands"][@type="list"]')
-                        if commands_list is not None:
-                            break
-        
-        # STEP 5: Add simple references to each selected macro in the Commands/Macro list
+        # STEP 4: Add simple references to each selected macro in the Commands/Macro list
         # Use stored reference_snippet if available, otherwise generate it
         if commands_list is not None:
             for macro in selected_macros:

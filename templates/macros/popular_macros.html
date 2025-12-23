@@ -37,18 +37,6 @@
                 </div>
                 
                 <div class="col-md-3">
-                    <label for="category" class="form-label">Category</label>
-                    <select name="category" id="category" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Categories</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
                     <label for="cubase_version" class="form-label">Version</label>
                     <select name="cubase_version" id="cubase_version" class="form-select" onchange="this.form.submit()">
                         <option value="">All Versions</option>
@@ -101,20 +89,13 @@
                         </a>
                     </h6>
                     
-                    <!-- Category and Author -->
+                    <!-- Author -->
                     <div class="mb-2">
-                        {% if macro.category %}
-                        <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-decoration-none">
-                            <span class="badge bg-secondary">
-                                <i class="fas fa-folder"></i> {{ macro.category.name }}
-                            </span>
-                        </a>
-                        {% endif %}
                         
                         <small class="text-muted ms-2">
-                            by {% if macro.keycommands_file.user.username %}
-                                <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}" class="text-decoration-none">
-                                    {{ macro.keycommands_file.user.username }}
+                            by {% if macro.user.username %}
+                                <a href="{% url 'accounts:public_profile' macro.user.username %}" class="text-decoration-none">
+                                    {{ macro.user.username }}
                                 </a>
                             {% else %}
                                 Unknown User
@@ -139,26 +120,26 @@
                     {% endif %}
                     
                     <!-- Rating -->
-                    {% if macro.average_rating %}
+                    {% if macro.avg_rating %}
                     <div class="mb-2">
                         <div class="rating-stars">
                             {% for i in "12345" %}
-                                {% if forloop.counter <= macro.average_rating %}
+                                {% if forloop.counter <= macro.avg_rating %}
                                     <i class="fas fa-star"></i>
                                 {% else %}
                                     <i class="far fa-star"></i>
                                 {% endif %}
                             {% endfor %}
-                            <small class="text-muted ms-1">({{ macro.vote_count }} rating{{ macro.vote_count|pluralize }})</small>
+                            <small class="text-muted ms-1">({{ macro.total_votes }} rating{{ macro.total_votes|pluralize }})</small>
                         </div>
                     </div>
                     {% endif %}
                     
                     <!-- Cubase Version -->
-                    {% if macro.keycommands_file.cubase_version %}
+                    {% if macro.cubase_version %}
                     <div class="mb-2">
                         <small class="text-muted">
-                            <i class="fas fa-compact-disc"></i> {{ macro.keycommands_file.cubase_version.version }}
+                            <i class="fas fa-compact-disc"></i> {{ macro.cubase_version.version }}
                         </small>
                     </div>
                     {% endif %}
@@ -168,9 +149,6 @@
                 <div class="card-footer bg-transparent">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="d-flex gap-3">
-                            <small class="text-muted">
-                                <i class="fas fa-eye"></i> {{ macro.view_count }}
-                            </small>
                             <small class="text-muted">
                                 <i class="fas fa-download"></i> {{ macro.download_count }}
                             </small>
@@ -184,6 +162,9 @@
                         {% if user.is_authenticated %}
                         <button class="btn btn-sm btn-outline-danger btn-favorite" data-macro-id="{{ macro.id }}">
                             <i class="far fa-heart"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success btn-add-to-cart" data-macro-id="{{ macro.id }}">
+                            <i class="fas fa-cart-plus"></i> Add
                         </button>
                         {% endif %}
                         
@@ -266,7 +247,7 @@
 
 {% block extra_js %}
 <script>
-// Initialize favorite buttons
+// Initialize favorite buttons and add to cart
 document.addEventListener('DOMContentLoaded', function() {
     const favoriteButtons = document.querySelectorAll('.btn-favorite');
     favoriteButtons.forEach(button => {
@@ -276,6 +257,55 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.toggleFavorite) {
                 window.toggleFavorite(macroId, this);
             }
+        });
+    });
+    
+    // Initialize add to cart buttons
+    const addToCartButtons = document.querySelectorAll('.btn-add-to-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const macroId = this.dataset.macroId;
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            fetch(`/macros/cart/add/${macroId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="fas fa-check"></i> Added';
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-success');
+                    if (window.updateCartBadge) {
+                        window.updateCartBadge(data.cart_count);
+                    }
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                        this.disabled = false;
+                    }, 2000);
+                } else {
+                    alert(data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
         });
     });
 });

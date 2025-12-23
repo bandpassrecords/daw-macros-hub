@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Cart - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-shopping-cart"></i> My Cart
+                </h1>
+                {% if cart_count > 0 %}
+                <div>
+                    <a href="{% url 'macros:clear_cart' %}" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to clear your cart?')">
+                        <i class="fas fa-trash"></i> Clear Cart
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if cart_count == 0 %}
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
+                    <h3>Your cart is empty</h3>
+                    <p class="text-muted mb-4">Start browsing macros and add them to your cart!</p>
+                    <a href="{% url 'macros:macro_list' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search"></i> Browse Macros
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>You have {{ cart_count }} macro{{ cart_count|pluralize }} in your cart.</strong>
+                Review your selection below, then upload your Key Commands.xml file to download them all at once.
+            </div>
+            
+            <!-- Macros -->
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        {% for macro in macros %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'macros:macro_detail' macro.id %}" class="text-decoration-none">
+                                            {{ macro.name|truncatechars:40 }}
+                                        </a>
+                                    </h6>
+                                    
+                                    {% if macro.key_binding %}
+                                    <div class="mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-keyboard"></i> {{ macro.key_binding }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if macro.description %}
+                                    <p class="card-text text-muted small" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        {{ macro.description }}
+                                    </p>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            by <a href="{% url 'accounts:public_profile' macro.user.username %}">{{ macro.user.username }}</a>
+                                        </small>
+                                        <button class="btn btn-sm btn-outline-danger btn-remove-from-cart" data-macro-id="{{ macro.id }}">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="card shadow mt-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h5 class="mb-1">Ready to download?</h5>
+                            <p class="text-muted mb-0">Upload your Key Commands.xml file and we'll embed all {{ cart_count }} macro{{ cart_count|pluralize }} into it.</p>
+                        </div>
+                        <a href="{% url 'macros:upload_and_download' %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-upload"></i> Upload & Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove from cart
+    const removeButtons = document.querySelectorAll('.btn-remove-from-cart');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const macroId = this.dataset.macroId;
+            if (confirm('Remove this macro from your cart?')) {
+                fetch(`/macros/cart/remove/${macroId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+

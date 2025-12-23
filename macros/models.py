@@ -6,11 +6,6 @@ import uuid
 import os
 
 
-def keycommands_upload_path(instance, filename):
-    """Generate upload path for key commands files"""
-    return f'keycommands/{instance.user.username}/{timezone.now().strftime("%Y/%m")}/{filename}'
-
-
 class CubaseVersion(models.Model):
     """Model for tracking Cubase versions"""
     version = models.CharField(max_length=50, unique=True)
@@ -28,49 +23,11 @@ class CubaseVersion(models.Model):
         return self.version
 
 
-class KeyCommandsFile(models.Model):
-    """Model for uploaded Key Commands XML files - file is optional, only XML snippets are stored"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='keycommands_files')
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    file = models.FileField(upload_to=keycommands_upload_path, null=True, blank=True)  # Optional - file not stored
-    cubase_version = models.ForeignKey(CubaseVersion, on_delete=models.SET_NULL, null=True, blank=True)
-    is_private = models.BooleanField(default=False)  # False = public, True = private
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    download_count = models.PositiveIntegerField(default=0)
-    
-    class Meta:
-        ordering = ['-created_at']
-        unique_together = ['user', 'name']
-    
-    def __str__(self):
-        return f"{self.name} by {self.user.username}"
-    
-    def get_absolute_url(self):
-        return f'/macros/keycommands/{self.id}/'
-
-
-class MacroCategory(models.Model):
-    """Model for macro categories from Key Commands XML"""
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['name']
-        verbose_name_plural = "Macro Categories"
-    
-    def __str__(self):
-        return self.name
-
-
 class Macro(models.Model):
     """Model for individual macros/commands"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    keycommands_file = models.ForeignKey(KeyCommandsFile, on_delete=models.CASCADE, related_name='macros')
-    category = models.ForeignKey(MacroCategory, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='macros')
+    cubase_version = models.ForeignKey(CubaseVersion, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=500)
     description = models.TextField(blank=True)
     key_binding = models.CharField(max_length=100, blank=True)  # For storing key combinations
@@ -82,15 +39,14 @@ class Macro(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     # For tracking popularity
-    view_count = models.PositiveIntegerField(default=0)
     download_count = models.PositiveIntegerField(default=0)
     
     class Meta:
         ordering = ['-created_at']
-        unique_together = ['keycommands_file', 'name', 'category']
+        unique_together = ['user', 'name']
     
     def __str__(self):
-        return f"{self.name} ({self.category.name if self.category else 'No Category'})"
+        return f"{self.name} by {self.user.username}"
     
     def get_absolute_url(self):
         return f'/macros/{self.id}/'

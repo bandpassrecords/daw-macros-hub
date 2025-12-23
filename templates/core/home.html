@@ -41,38 +41,6 @@
     </div>
 </div>
 
-<!-- Statistics Section -->
-<div class="py-5" style="background: white;">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-number" style="color: #1f2937;">{{ stats.total_macros }}</div>
-                    <div class="stat-label">Public Macros</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-number" style="color: #10b981;">{{ stats.total_users }}</div>
-                    <div class="stat-label">Community Members</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-number" style="color: #06b6d4;">{{ stats.total_files }}</div>
-                    <div class="stat-label">Macros Files</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-number" style="color: #f59e0b;">{{ stats.total_categories }}</div>
-                    <div class="stat-label">Categories</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Featured Macros Section -->
 <div class="container py-5">
     <div class="row mb-5">
@@ -95,15 +63,6 @@
                         </a>
                     </h6>
                     
-                    {% if macro.category %}
-                    <div class="mb-3">
-                        <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-decoration-none">
-                            <span class="category-badge">
-                                <i class="fas fa-folder"></i> {{ macro.category.name }}
-                            </span>
-                        </a>
-                    </div>
-                    {% endif %}
                     
                     {% if macro.key_binding %}
                     <div class="mb-3">
@@ -115,8 +74,8 @@
                     
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <small class="text-muted">
-                            by <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}" class="text-decoration-none">
-                                {{ macro.keycommands_file.user.username }}
+                            by <a href="{% url 'accounts:public_profile' macro.user.username %}" class="text-decoration-none">
+                                {{ macro.user.username }}
                             </a>
                         </small>
                         
@@ -138,9 +97,6 @@
                 <div class="card-footer">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-3">
-                            <small class="text-muted">
-                                <i class="fas fa-eye"></i> {{ macro.view_count }}
-                            </small>
                             <small class="text-muted">
                                 <i class="fas fa-download"></i> {{ macro.download_count }}
                             </small>
@@ -207,9 +163,6 @@
                         </h6>
                         
                         <div class="d-flex justify-content-between align-items-center">
-                            {% if macro.category %}
-                                <span class="badge bg-light text-dark">{{ macro.category.name }}</span>
-                            {% endif %}
                             <small class="text-muted">{{ macro.created_at|timesince }} ago</small>
                         </div>
                     </div>
@@ -221,40 +174,6 @@
 </div>
 {% endif %}
 
-<!-- Categories Section -->
-{% if popular_categories %}
-<div class="container py-5">
-    <div class="row">
-        <div class="col-12">
-            <h2 class="mb-4">
-                <i class="fas fa-folder text-info"></i> Popular Categories
-            </h2>
-        </div>
-    </div>
-    
-    <div class="row">
-        {% for category in popular_categories %}
-        <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
-            <a href="{% url 'macros:category_detail' category.id %}" class="text-decoration-none">
-                <div class="card text-center h-100">
-                    <div class="card-body">
-                        <i class="fas fa-folder-open fa-2x text-info mb-2"></i>
-                        <h6 class="card-title small">{{ category.name|truncatechars:20 }}</h6>
-                        <small class="text-muted">{{ category.macro_count }} macros</small>
-                    </div>
-                </div>
-            </a>
-        </div>
-        {% endfor %}
-    </div>
-    
-    <div class="text-center">
-        <a href="{% url 'macros:categories' %}" class="btn btn-outline-info">
-            <i class="fas fa-arrow-right"></i> View All Categories
-        </a>
-    </div>
-</div>
-{% endif %}
 
 <!-- Cubase Versions Section -->
 {% if cubase_versions %}
@@ -324,7 +243,7 @@
             <h4>3. Download</h4>
             <p class="text-muted">
                 Browse and select macros from others. Download a new 
-                Macros file (KeyCommands.xml) with your selected macros.
+                Macros file (Key Commands.xml) with your selected macros.
             </p>
         </div>
     </div>

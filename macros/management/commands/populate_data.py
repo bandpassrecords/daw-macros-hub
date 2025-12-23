@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from macros.models import CubaseVersion, MacroCategory
+from macros.models import CubaseVersion
 from accounts.models import UserProfile
 
 
@@ -18,13 +18,9 @@ class Command(BaseCommand):
         if options['clear']:
             self.stdout.write('Clearing existing data...')
             CubaseVersion.objects.all().delete()
-            MacroCategory.objects.all().delete()
 
         self.stdout.write('Creating Cubase versions...')
         self.create_cubase_versions()
-        
-        self.stdout.write('Creating macro categories...')
-        self.create_categories()
         
         self.stdout.write('Creating sample users...')
         self.create_sample_users()
@@ -82,58 +78,7 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'  Already exists: {version.version}')
 
-    def create_categories(self):
-        """Create common macro categories based on the XML file"""
-        categories = [
-            'Preferences',
-            'Process Logical Preset',
-            'Process Project Logical Editor',
-            'MIDI',
-            'Editors',
-            'Edit',
-            'MIDI Quantize',
-            'Quantize Category',
-            'Set Insert Length',
-            'Devices',
-            'Beat Designer',
-            'Mixer',
-            'Crossfade Editor',
-            'Media',
-            'File',
-            'Transport',
-            'Project',
-            'Audio',
-            'Video',
-            'Zoom',
-            'Snap/Quantize',
-            'Navigate',
-            'Nudge',
-            'Select',
-            'Macros',
-            'Process',
-            'Windows',
-            'Functions',
-            'Tools',
-            'Generic Remote',
-            'Expression Maps',
-            'VST',
-            'Control Room',
-            'Score',
-            'Sampler Control',
-            'LoopMash',
-            'Automation',
-            'Marker',
-            'Comping',
-            'Track Versions',
-            'Key Commands',
-        ]
-
-        for category_name in categories:
-            category, created = MacroCategory.objects.get_or_create(
-                name=category_name
-            )
-            if created:
-                self.stdout.write(f'  Created category: {category_name}')
+    # Categories are no longer used - removed create_categories method
 
     def create_sample_users(self):
         """Create sample users for demonstration"""

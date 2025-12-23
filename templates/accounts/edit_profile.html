@@ -317,29 +317,6 @@
                 </div>
             </div>
             
-            <!-- Account Actions -->
-            <div class="card mt-4 border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h6 class="text-danger mb-1">Delete Account</h6>
-                            <p class="text-muted mb-0">
-                                Permanently delete your account and all associated data. This action cannot be undone.
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-outline-danger" onclick="confirmAccountDeletion()">
-                                <i class="fas fa-trash"></i> Delete Account
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -376,27 +353,7 @@
 
 {% block extra_js %}
 <script>
-function confirmAccountDeletion() {
-    if (confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently delete all your uploads, favorites, and profile data.')) {
-        if (confirm('This is your final warning. Type "DELETE" in the prompt that follows to confirm account deletion.')) {
-            const confirmation = prompt('Type "DELETE" to confirm account deletion:');
-            if (confirmation === 'DELETE') {
-                // Create a form to handle account deletion
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{% url "accounts:delete_account" %}';
-                form.innerHTML = `
-                    {% csrf_token %}
-                    <input type="hidden" name="confirm_deletion" value="true">
-                `;
-                document.body.appendChild(form);
-                form.submit();
-            } else {
-                alert('Account deletion cancelled. You must type "DELETE" exactly to confirm.');
-            }
-        }
-    }
-}
+// Account deletion functionality removed - not implemented
 
 // Preview uploaded avatar
 document.addEventListener('DOMContentLoaded', function() {

@@ -1,44 +1,27 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When, IntegerField
-from .models import KeyCommandsFile, Macro, MacroVote, MacroCollection, CubaseVersion
+from .models import Macro, MacroVote, MacroCollection, CubaseVersion
 from .utils import KeyCommandsParser
 
 
-class KeyCommandsFileForm(forms.ModelForm):
-    """Form for uploading Macros files (KeyCommands.xml) - file is only used for parsing, never stored"""
+class MacroUploadForm(forms.Form):
+    """Form for uploading Macros files (Key Commands.xml) - file is only used for parsing, never stored"""
     
-    # File field is NOT in Meta.fields - we add it manually for upload/parsing only, never stored
     file = forms.FileField(
         required=True,
         widget=forms.FileInput(attrs={
             'class': 'form-control-file',
             'accept': '.xml'
-        }),
-        help_text='Upload your Macros file (KeyCommands.xml). The file will be parsed and only macro snippets will be stored.'
+        })
     )
     
-    class Meta:
-        model = KeyCommandsFile
-        fields = ['name', 'description', 'cubase_version']
-        # Note: 'file' is NOT in fields - we only use it for parsing, never store it
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter a name for your Macros file'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 4,
-                'placeholder': 'Describe your Key Commands setup (optional)'
-            }),
-            'cubase_version': forms.Select(attrs={'class': 'form-control'}),
-        }
-        help_texts = {
-            'name': 'Give your Macros file a descriptive name.',
-            'description': 'Optional description of what makes this setup special.',
-            'cubase_version': 'Select the Cubase version this file was created with.',
-        }
+    cubase_version = forms.ModelChoiceField(
+        queryset=None,  # Will be set in __init__
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Select the Cubase version this file was created with.'
+    )
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,14 +36,12 @@ class KeyCommandsFileForm(forms.ModelForm):
         self.fields['cubase_version'].queryset = queryset
         self.fields['cubase_version'].empty_label = None  # Remove empty label since we have "Unspecified"
         
-        # Set default to "Unspecified" if creating new instance
-        if not self.instance or not self.instance.pk:
-            try:
-                unspecified_version = CubaseVersion.objects.get(version='Unspecified')
-                self.fields['cubase_version'].initial = unspecified_version
-            except CubaseVersion.DoesNotExist:
-                pass  # If Unspecified doesn't exist yet, no default
-        
+        # Set default to "Unspecified"
+        try:
+            unspecified_version = CubaseVersion.objects.get(version='Unspecified')
+            self.fields['cubase_version'].initial = unspecified_version
+        except CubaseVersion.DoesNotExist:
+            pass
     
     def clean_file(self):
         file = self.cleaned_data.get('file')
@@ -87,14 +68,14 @@ class KeyCommandsFileForm(forms.ModelForm):
                     
                     # Check if it's a Key Commands file
                     if root.tag != 'KeyCommands':
-                        raise ValidationError("Invalid Macros file (KeyCommands.xml): Root element must be 'KeyCommands'")
+                        raise ValidationError("Invalid Macros file (Key Commands.xml): Root element must be 'KeyCommands'")
                     
                     # Check for either Macros or Categories section (both are valid Cubase formats)
                     macros_list = root.find(".//list[@name='Macros']")
                     categories_list = root.find(".//list[@name='Categories']")
                     
                     if macros_list is None and categories_list is None:
-                        raise ValidationError("Invalid Macros file (KeyCommands.xml): No Macros or Categories section found")
+                        raise ValidationError("Invalid Macros file (Key Commands.xml): No Macros or Categories section found")
                     
                     # Check if there are any items in whichever section exists
                     items_found = False
@@ -107,7 +88,7 @@ class KeyCommandsFileForm(forms.ModelForm):
                         items_found = len(category_items) > 0
                         
                     if not items_found:
-                        raise ValidationError("Invalid Macros file (KeyCommands.xml): No macros or categories found")
+                        raise ValidationError("Invalid Macros file (Key Commands.xml): No macros or categories found")
                         
                 except ET.ParseError as pe:
                     raise ValidationError(f"Invalid XML format: {pe}")
@@ -217,13 +198,6 @@ class MacroSearchForm(forms.Form):
         })
     )
     
-    category = forms.ModelChoiceField(
-        queryset=None,  # Will be set in __init__
-        required=False,
-        empty_label="All Categories",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    
     cubase_version = forms.ModelChoiceField(
         queryset=None,  # Will be set in __init__
         required=False,
@@ -245,9 +219,6 @@ class MacroSearchForm(forms.Form):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from .models import MacroCategory
-        
-        self.fields['category'].queryset = MacroCategory.objects.all()
         self.fields['cubase_version'].queryset = CubaseVersion.objects.all()
 
 

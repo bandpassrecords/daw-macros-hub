@@ -131,10 +131,6 @@
                                     <td><strong>Downloads:</strong></td>
                                     <td>{{ keycommands_file.download_count }}</td>
                                 </tr>
-                                <tr>
-                                    <td><strong>Total Views:</strong></td>
-                                    <td>{{ total_views|default:0 }}</td>
-                                </tr>
                             </table>
                         </div>
                     </div>
@@ -188,14 +184,6 @@
             
             <!-- Filter Options -->
             <div class="d-flex gap-2">
-                <select class="form-select form-select-sm" id="categoryFilter" onchange="filterMacros()">
-                    <option value="">All Categories</option>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                    {% endfor %}
-                </select>
                 
                 <select class="form-select form-select-sm" id="visibilityFilter" onchange="filterMacros()">
                     <option value="">All Macros</option>
@@ -258,9 +246,6 @@
                                     <span class="badge bg-success">Public</span>
                                 {% endif %}
                                 
-                                {% if macro.category %}
-                                    <span class="badge bg-info">{{ macro.category.name }}</span>
-                                {% endif %}
                             </div>
                             
                             <!-- Key Binding -->
@@ -282,8 +267,7 @@
                             <!-- Statistics -->
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
-                                    <i class="fas fa-eye"></i> {{ macro.view_count }}
-                                    <i class="fas fa-download ms-2"></i> {{ macro.download_count }}
+                                    <i class="fas fa-download"></i> {{ macro.download_count }}
                                 </small>
                                 
                                 {% if macro.average_rating %}
@@ -427,16 +411,9 @@
 {% block extra_js %}
 <script>
 function filterMacros() {
-    const categoryFilter = document.getElementById('categoryFilter').value;
     const visibilityFilter = document.getElementById('visibilityFilter').value;
     
     let url = new URL(window.location);
-    
-    if (categoryFilter) {
-        url.searchParams.set('category', categoryFilter);
-    } else {
-        url.searchParams.delete('category');
-    }
     
     if (visibilityFilter) {
         url.searchParams.set('visibility', visibilityFilter);

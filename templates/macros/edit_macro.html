@@ -50,22 +50,6 @@
                             {% endif %}
                         </div>
                         
-                        <!-- Category -->
-                        <div class="mb-3">
-                            <label for="{{ form.category.id_for_label }}" class="form-label">
-                                <i class="fas fa-folder"></i> Category
-                            </label>
-                            {{ form.category }}
-                            {% if form.category.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.category.errors }}
-                                </div>
-                            {% endif %}
-                            {% if form.category.help_text %}
-                                <div class="form-text">{{ form.category.help_text }}</div>
-                            {% endif %}
-                        </div>
-                        
                         <!-- Description -->
                         <div class="mb-3">
                             <label for="{{ form.description.id_for_label }}" class="form-label">
@@ -143,12 +127,6 @@
                         <div class="col-md-6">
                             <table class="table table-sm">
                                 <tr>
-                                    <td><strong>Source File:</strong></td>
-                                    <td>
-                                        <a href="{% url 'macros:keycommands_detail' macro.keycommands_file.id %}">
-                                            {{ macro.keycommands_file.name }}
-                                        </a>
-                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Created:</strong></td>
@@ -163,10 +141,6 @@
                         
                         <div class="col-md-6">
                             <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Views:</strong></td>
-                                    <td>{{ macro.view_count }}</td>
-                                </tr>
                                 <tr>
                                     <td><strong>Downloads:</strong></td>
                                     <td>{{ macro.download_count }}</td>

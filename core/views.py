@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Count, Avg, Q
-from macros.models import Macro, MacroCategory, KeyCommandsFile, CubaseVersion
+from macros.models import Macro, CubaseVersion
 from accounts.models import UserProfile
 
 
@@ -9,41 +9,32 @@ def home(request):
     
     # Get featured/popular macros (is_private=False means public)
     featured_macros = Macro.objects.filter(is_private=False).select_related(
-        'category', 'keycommands_file__user'
+        'user', 'cubase_version'
     ).annotate(
         avg_rating=Avg('votes__rating'),
         total_votes=Count('votes')
-    ).order_by('-view_count', '-download_count')[:8]
+    ).order_by('-download_count', '-created_at')[:8]
     
     # Get recently uploaded macros (is_private=False means public)
     recent_macros = Macro.objects.filter(is_private=False).select_related(
-        'category', 'keycommands_file__user'
+        'user', 'cubase_version'
     ).order_by('-created_at')[:6]
     
-    # Get popular categories
-    popular_categories = MacroCategory.objects.annotate(
-        macro_count=Count('macro', filter=Q(macro__is_private=False))
-    ).filter(macro_count__gt=0).order_by('-macro_count')[:6]
     
     # Get some statistics
     stats = {
         'total_macros': Macro.objects.filter(is_private=False).count(),
         'total_users': UserProfile.objects.count(),
-        'total_files': KeyCommandsFile.objects.filter(is_private=False).count(),  # is_private=False means public
-        'total_categories': MacroCategory.objects.annotate(
-            macro_count=Count('macro', filter=Q(macro__is_private=False))
-        ).filter(macro_count__gt=0).count(),
     }
     
     # Get available Cubase versions
     cubase_versions = CubaseVersion.objects.annotate(
-        file_count=Count('keycommandsfile', filter=Q(keycommandsfile__is_private=False))  # is_private=False means public
-    ).filter(file_count__gt=0).order_by('-major_version', '-minor_version')[:5]
+        macro_count=Count('macro', filter=Q(macro__is_private=False))  # is_private=False means public
+    ).filter(macro_count__gt=0).order_by('-major_version', '-minor_version')[:5]
     
     context = {
         'featured_macros': featured_macros,
         'recent_macros': recent_macros,
-        'popular_categories': popular_categories,
         'stats': stats,
         'cubase_versions': cubase_versions,
     }

@@ -69,124 +69,18 @@
         </div>
     </div>
     
-    <!-- Navigation Tabs -->
+    <!-- Macros Section -->
     <div class="row">
         <div class="col-12">
-            <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="files-tab" data-bs-toggle="tab" data-bs-target="#files" type="button" role="tab">
-                        <i class="fas fa-file"></i> Key Commands Files 
-                        <span class="badge bg-secondary ms-1">{{ public_keycommands.paginator.count }}</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="macros-tab" data-bs-toggle="tab" data-bs-target="#macros" type="button" role="tab">
-                        <i class="fas fa-cog"></i> Public Macros
-                        <span class="badge bg-secondary ms-1">{{ public_macros.paginator.count }}</span>
-                    </button>
-                </li>
-            </ul>
+            <h3 class="mb-4">
+                <i class="fas fa-cog"></i> Macros
+                <span class="badge bg-secondary ms-2">{{ public_macros.paginator.count }}</span>
+            </h3>
         </div>
     </div>
     
-    <!-- Tab Content -->
-    <div class="tab-content" id="profileTabsContent">
-        <!-- Key Commands Files Tab -->
-        <div class="tab-pane fade show active" id="files" role="tabpanel">
-            {% if public_keycommands %}
-            <div class="row">
-                {% for file in public_keycommands %}
-                <div class="col-lg-6 col-xl-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="card-title">
-                                <a href="{% url 'macros:keycommands_detail' file.id %}" class="text-decoration-none">
-                                    {{ file.name|truncatechars:40 }}
-                                </a>
-                            </h6>
-                            
-                            {% if file.description %}
-                            <p class="card-text text-muted small">
-                                {{ file.description|truncatechars:100 }}
-                            </p>
-                            {% endif %}
-                            
-                            <div class="row text-muted small">
-                                <div class="col-6">
-                                    <i class="fas fa-cog"></i> {{ file.macros.count }} macro{{ file.macros.count|pluralize }}
-                                </div>
-                                {% if file.cubase_version %}
-                                <div class="col-6">
-                                    <i class="fas fa-compact-disc"></i> {{ file.cubase_version.version }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="card-footer bg-transparent">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar"></i> {{ file.created_at|timesince }} ago
-                                </small>
-                                <a href="{% url 'macros:keycommands_detail' file.id %}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Files Pagination -->
-            {% if public_keycommands.has_other_pages %}
-            <nav aria-label="Files pagination">
-                <ul class="pagination justify-content-center">
-                    {% if public_keycommands.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?files_page={{ public_keycommands.previous_page_number }}#files">Previous</a>
-                    </li>
-                    {% endif %}
-                    
-                    {% for page_num in public_keycommands.paginator.page_range %}
-                        {% if page_num == public_keycommands.number %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ page_num }}</span>
-                        </li>
-                        {% else %}
-                        <li class="page-item">
-                            <a class="page-link" href="?files_page={{ page_num }}#files">{{ page_num }}</a>
-                        </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if public_keycommands.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?files_page={{ public_keycommands.next_page_number }}#files">Next</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
-            
-            {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-file fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No public Key Commands files</h5>
-                {% if is_own_profile %}
-                <p class="text-muted">Your uploaded files will appear here when you make them public.</p>
-                <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
-                    <i class="fas fa-upload"></i> Upload Your First File
-                </a>
-                {% else %}
-                <p class="text-muted">{{ profile_user.username }} hasn't shared any Key Commands files yet.</p>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Public Macros Tab -->
-        <div class="tab-pane fade" id="macros" role="tabpanel">
+    <div class="row">
+        <div class="col-12">
             {% if public_macros %}
             <div class="row">
                 {% for macro in public_macros %}
@@ -199,15 +93,6 @@
                                 </a>
                             </h6>
                             
-                            {% if macro.category %}
-                            <div class="mb-2">
-                                <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-decoration-none">
-                                    <span class="badge bg-secondary">
-                                        <i class="fas fa-folder"></i> {{ macro.category.name }}
-                                    </span>
-                                </a>
-                            </div>
-                            {% endif %}
                             
                             {% if macro.description %}
                             <p class="card-text text-muted small">
@@ -227,9 +112,6 @@
                         <div class="card-footer bg-transparent">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex gap-3">
-                                    <small class="text-muted">
-                                        <i class="fas fa-eye"></i> {{ macro.view_count }}
-                                    </small>
                                     <small class="text-muted">
                                         <i class="fas fa-star"></i> {{ macro.vote_count }}
                                     </small>
@@ -278,7 +160,7 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="fas fa-cog fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No public macros</h5>
+                <h5 class="text-muted">No macros</h5>
                 {% if is_own_profile %}
                 <p class="text-muted">Your shared macros will appear here when you make them public.</p>
                 <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
@@ -317,29 +199,4 @@
 }
 
 </style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle hash navigation for tabs
-    const hash = window.location.hash;
-    if (hash === '#macros') {
-        const macrosTab = new bootstrap.Tab(document.getElementById('macros-tab'));
-        macrosTab.show();
-    }
-    
-    // Update URL hash when tab changes
-    document.querySelectorAll('#profileTabs button[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function (e) {
-            const target = e.target.getAttribute('data-bs-target');
-            if (target === '#macros') {
-                history.replaceState(null, null, '#macros');
-            } else {
-                history.replaceState(null, null, '#files');
-            }
-        });
-    });
-});
-</script>
 {% endblock %} 

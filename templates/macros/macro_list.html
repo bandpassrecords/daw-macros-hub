@@ -24,14 +24,6 @@
                             {{ form.query }}
                         </div>
                         
-                        <!-- Category Filter -->
-                        <div class="mb-3">
-                            <label for="{{ form.category.id_for_label }}" class="form-label">
-                                <i class="fas fa-folder"></i> Category
-                            </label>
-                            {{ form.category }}
-                        </div>
-                        
                         <!-- Cubase Version Filter -->
                         <div class="mb-3">
                             <label for="{{ form.cubase_version.id_for_label }}" class="form-label">
@@ -70,26 +62,6 @@
                 </div>
             </div>
             
-            <!-- Popular Categories -->
-            {% if popular_categories %}
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">
-                        <i class="fas fa-fire"></i> Popular Categories
-                    </h6>
-                </div>
-                <div class="card-body">
-                    {% for category in popular_categories %}
-                    <a href="{% url 'macros:category_detail' category.id %}" class="d-block text-decoration-none mb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-truncate">{{ category.name|truncatechars:20 }}</span>
-                            <span class="badge bg-secondary">{{ category.macro_count }}</span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
         </div>
         
         <!-- Main Content -->
@@ -128,16 +100,6 @@
                                 </a>
                             </h6>
                             
-                            <!-- Category Badge -->
-                            {% if macro.category %}
-                            <div class="mb-3">
-                                <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-decoration-none">
-                                    <span class="category-badge">
-                                        <i class="fas fa-folder"></i> {{ macro.category.name }}
-                                    </span>
-                                </a>
-                            </div>
-                            {% endif %}
                             
                             <!-- Key Binding -->
                             {% if macro.key_binding %}
@@ -158,9 +120,9 @@
                             <!-- Author and Rating -->
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <small class="text-muted">
-                                    by {% if macro.keycommands_file.user.username %}
-                                        <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}" class="text-decoration-none">
-                                            {{ macro.keycommands_file.user.username }}
+                                    by {% if macro.user.username %}
+                                        <a href="{% url 'accounts:public_profile' macro.user.username %}" class="text-decoration-none">
+                                            {{ macro.user.username }}
                                         </a>
                                     {% else %}
                                         Unknown User
@@ -182,10 +144,10 @@
                             </div>
                             
                             <!-- Cubase Version -->
-                            {% if macro.keycommands_file.cubase_version %}
+                            {% if macro.cubase_version %}
                             <div class="mb-3">
                                 <small class="text-muted">
-                                    <i class="fas fa-compact-disc"></i> {{ macro.keycommands_file.cubase_version.version }}
+                                    <i class="fas fa-compact-disc"></i> {{ macro.cubase_version.version }}
                                 </small>
                             </div>
                             {% endif %}
@@ -196,9 +158,6 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex gap-3">
                                     <small class="text-muted">
-                                        <i class="fas fa-eye"></i> {{ macro.view_count }}
-                                    </small>
-                                    <small class="text-muted">
                                         <i class="fas fa-download"></i> {{ macro.download_count }}
                                     </small>
                                 </div>
@@ -207,6 +166,9 @@
                                     {% if user.is_authenticated %}
                                     <button class="btn btn-sm btn-outline-danger btn-favorite" data-macro-id="{{ macro.id }}" title="Add to favorites">
                                         <i class="far fa-heart"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-success btn-add-to-cart" data-macro-id="{{ macro.id }}" title="Add to cart">
+                                        <i class="fas fa-cart-plus"></i> Add
                                     </button>
                                     {% endif %}
                                     
@@ -273,14 +235,11 @@
                     <i class="fas fa-search" style="font-size: 4rem; color: var(--gray-400);"></i>
                 </div>
                 <h3 class="mb-3">No macros found</h3>
-                <p class="text-muted mb-4">Try adjusting your search criteria or browse all categories.</p>
+                <p class="text-muted mb-4">Try adjusting your search criteria.</p>
                 
                 <div class="d-flex gap-2 justify-content-center flex-wrap">
                     <a href="{% url 'macros:macro_list' %}" class="btn btn-outline-primary">
                         <i class="fas fa-list"></i> View All Macros
-                    </a>
-                    <a href="{% url 'macros:categories' %}" class="btn btn-outline-info">
-                        <i class="fas fa-folder"></i> Browse Categories
                     </a>
                     {% if user.is_authenticated %}
                     <a href="{% url 'macros:upload_keycommands' %}" class="btn btn-primary">
@@ -333,8 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize favorite buttons
     const favoriteButtons = document.querySelectorAll('.btn-favorite');
     favoriteButtons.forEach(button => {
-        // Check if this macro is already favorited (would need AJAX call or server-side data)
-        // For now, we'll just set up the click handler
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -343,6 +300,76 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleFavorite(macroId, this);
         });
     });
+    
+    // Initialize add to cart buttons
+    const addToCartButtons = document.querySelectorAll('.btn-add-to-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const macroId = this.dataset.macroId;
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            fetch(`/macros/cart/add/${macroId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="fas fa-check"></i> Added';
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-success');
+                    updateCartBadge(data.cart_count);
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                        this.disabled = false;
+                    }, 2000);
+                } else {
+                    alert(data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
+        });
+    });
+    
+    // Update cart badge
+    function updateCartBadge(count) {
+        const badges = document.querySelectorAll('#nav-cart-badge, #cart-badge');
+        badges.forEach(badge => {
+            if (badge) {
+                badge.textContent = count;
+                if (count > 0) {
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    // Make updateCartBadge available globally
+    window.updateCartBadge = updateCartBadge;
+    
+    // Initialize cart badge on page load
+    {% if user.is_authenticated and cart_count %}
+    updateCartBadge({{ cart_count }});
+    {% endif %}
 });
 
 // This function is defined in main.js

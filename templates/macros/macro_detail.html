@@ -14,15 +14,6 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h1 class="h3 mb-1">{{ macro.name }}</h1>
-                            {% if macro.category %}
-                            <div class="mb-2">
-                                <a href="{% url 'macros:category_detail' macro.category.id %}" class="text-white text-decoration-none">
-                                    <span class="badge bg-light text-dark">
-                                        <i class="fas fa-folder"></i> {{ macro.category.name }}
-                                    </span>
-                                </a>
-                            </div>
-                            {% endif %}
                         </div>
                         
                         <div class="text-end">
@@ -62,12 +53,12 @@
                                 <tr>
                                     <td><strong>Author:</strong></td>
                                     <td>
-                                        {% if macro.keycommands_file.user.username %}
-                                            <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}">
-                                                {{ macro.keycommands_file.user.profile.display_name|default:macro.keycommands_file.user.username }}
+                                        {% if macro.user.username %}
+                                            <a href="{% url 'accounts:public_profile' macro.user.username %}">
+                                                {{ macro.user.profile.display_name|default:macro.user.username }}
                                             </a>
                                         {% else %}
-                                            {{ macro.keycommands_file.user.profile.display_name|default:"Unknown User" }}
+                                            {{ macro.user.profile.display_name|default:"Unknown User" }}
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -75,30 +66,18 @@
                                     <td><strong>Created:</strong></td>
                                     <td>{{ macro.created_at|date:"M d, Y" }}</td>
                                 </tr>
-                                {% if macro.keycommands_file.cubase_version %}
+                                {% if macro.cubase_version %}
                                 <tr>
                                     <td><strong>Version:</strong></td>
-                                    <td>{{ macro.keycommands_file.cubase_version.version }}</td>
+                                    <td>{{ macro.cubase_version.version }}</td>
                                 </tr>
                                 {% endif %}
-                                <tr>
-                                    <td><strong>File:</strong></td>
-                                    <td>
-                                        <a href="{% url 'macros:keycommands_detail' macro.keycommands_file.id %}">
-                                            {{ macro.keycommands_file.name }}
-                                        </a>
-                                    </td>
-                                </tr>
                             </table>
                         </div>
                         
                         <div class="col-md-6">
                             <h6><i class="fas fa-chart-bar"></i> Statistics</h6>
                             <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Views:</strong></td>
-                                    <td>{{ macro.view_count }}</td>
-                                </tr>
                                 <tr>
                                     <td><strong>Downloads:</strong></td>
                                     <td>{{ macro.download_count }}</td>
@@ -130,21 +109,64 @@
                         </div>
                     </div>
                     
+                    <!-- XML Snippets -->
+                    <div class="mb-4 mt-4">
+                        <h5><i class="fas fa-code"></i> XML Snippets</h5>
+                        
+                        {% if macro.xml_snippet %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-file-code"></i> Macro Definition (XML Snippet)
+                                </h6>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyXmlSnippet('xml-snippet')" title="Copy to clipboard">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <pre class="bg-light p-3 rounded border" style="max-height: 300px; overflow-y: auto;"><code id="xml-snippet" class="language-xml">{{ macro.xml_snippet }}</code></pre>
+                        </div>
+                        {% endif %}
+                        
+                        {% if macro.reference_snippet %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-link"></i> Macro Reference (Reference Snippet)
+                                </h6>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyXmlSnippet('reference-snippet')" title="Copy to clipboard">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <pre class="bg-light p-3 rounded border" style="max-height: 300px; overflow-y: auto;"><code id="reference-snippet" class="language-xml">{{ macro.reference_snippet }}</code></pre>
+                        </div>
+                        {% endif %}
+                        
+                        {% if not macro.xml_snippet and not macro.reference_snippet %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> No XML snippets available for this macro.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
                     <!-- Actions -->
                     <div class="d-flex gap-2 flex-wrap mt-3">
-                        <a href="{% url 'macros:keycommands_detail' macro.keycommands_file.id %}" class="btn btn-primary">
-                            <i class="fas fa-file-alt"></i> View Full File
-                        </a>
+                        {% if user.is_authenticated %}
+                        <button class="btn btn-success btn-add-to-cart" data-macro-id="{{ macro.id }}">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                        {% endif %}
                         
-                        {% if user.is_authenticated and user == macro.keycommands_file.user %}
+                        {% if user.is_authenticated and user == macro.user %}
                         <a href="{% url 'macros:edit_macro' macro.id %}" class="btn btn-outline-secondary">
                             <i class="fas fa-edit"></i> Edit Macro
                         </a>
                         {% endif %}
                         
-                        <button class="btn btn-success" onclick="copyKeyBinding()">
+                        {% if macro.key_binding %}
+                        <button class="btn btn-outline-success" onclick="copyKeyBinding()">
                             <i class="fas fa-copy"></i> Copy Key Binding
                         </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -263,7 +285,7 @@
                                 </a>
                             </h6>
                             <small class="text-muted">
-                                by {{ related.keycommands_file.user.username }}
+                                by {{ related.user.username }}
                             </small>
                             {% if related.avg_rating %}
                             <div class="rating-stars mt-1">
@@ -292,12 +314,8 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'macros:macro_list' %}?category={{ macro.category.id }}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-folder"></i> More from {{ macro.category.name }}
-                        </a>
-                        
-                        {% if macro.keycommands_file.user.username %}
-                        <a href="{% url 'accounts:public_profile' macro.keycommands_file.user.username %}" class="btn btn-outline-info btn-sm">
+                        {% if macro.user.username %}
+                        <a href="{% url 'accounts:public_profile' macro.user.username %}" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-user"></i> View Author Profile
                         </a>
                         {% endif %}
@@ -362,7 +380,36 @@ function copyShareUrl() {
     });
 }
 
-// Initialize favorite button
+function copyXmlSnippet(elementId) {
+    const codeElement = document.getElementById(elementId);
+    if (!codeElement) {
+        showToast('Snippet not found', 'error');
+        return;
+    }
+    
+    const text = codeElement.textContent || codeElement.innerText;
+    
+    navigator.clipboard.writeText(text).then(function() {
+        showToast('XML snippet copied to clipboard!', 'success');
+    }).catch(function() {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast('XML snippet copied to clipboard!', 'success');
+        } catch (err) {
+            showToast('Failed to copy snippet', 'error');
+        }
+        document.body.removeChild(textArea);
+    });
+}
+
+// Initialize favorite button and add to cart
 document.addEventListener('DOMContentLoaded', function() {
     const favoriteBtn = document.querySelector('.btn-favorite');
     if (favoriteBtn) {
@@ -370,6 +417,53 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const macroId = this.dataset.macroId;
             toggleFavorite(macroId, this);
+        });
+    }
+    
+    // Initialize add to cart button
+    const addToCartBtn = document.querySelector('.btn-add-to-cart');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const macroId = this.dataset.macroId;
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            
+            fetch(`/macros/cart/add/${macroId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="fas fa-check"></i> Added to Cart';
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-success');
+                    if (window.updateCartBadge) {
+                        window.updateCartBadge(data.cart_count);
+                    }
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                        this.disabled = false;
+                    }, 2000);
+                } else {
+                    alert(data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
         });
     }
 });

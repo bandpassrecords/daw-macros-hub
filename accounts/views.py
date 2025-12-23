@@ -7,7 +7,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm
 from .models import UserProfile
-from macros.models import KeyCommandsFile, Macro, MacroFavorite
+from macros.models import Macro, MacroFavorite
 
 
 def register(request):
@@ -38,41 +38,58 @@ def register(request):
 
 @login_required
 def profile(request):
-    """User profile view"""
+    """User profile view - shows user's macros"""
     user_profile, created = UserProfile.objects.get_or_create(user=request.user)
     
-    # Get user's uploaded files
-    keycommands_files = KeyCommandsFile.objects.filter(user=request.user).order_by('-created_at')
+    # Get user's favorite macros (as MacroFavorite objects)
+    favorite_macros = MacroFavorite.objects.filter(
+        user=request.user
+    ).select_related('macro__user', 'macro__cubase_version').order_by('-created_at')
     
-    # Get user's favorite macros
-    favorite_macros = Macro.objects.filter(
-        favorited_by__user=request.user
-    ).select_related('category', 'keycommands_file__user').order_by('-favorited_by__created_at')
+    # Get ALL user's macros (both public and private for own profile)
+    all_macros = Macro.objects.filter(
+        user=request.user
+    ).select_related('user', 'cubase_version').order_by('-created_at')
     
     # Get user's public macros (is_private=False means public)
-    public_macros = Macro.objects.filter(
-        keycommands_file__user=request.user,
-        is_private=False
-    ).select_related('category').order_by('-created_at')
+    public_macros = all_macros.filter(is_private=False)
+    
+    # Get user's private macros (is_private=True)
+    private_macros = all_macros.filter(is_private=True)
     
     # Paginate results
-    files_paginator = Paginator(keycommands_files, 10)
-    files_page = request.GET.get('files_page', 1)
-    keycommands_files = files_paginator.get_page(files_page)
+    all_macros_paginator = Paginator(all_macros, 20)
+    all_macros_page = request.GET.get('all_macros_page', 1)
+    all_macros = all_macros_paginator.get_page(all_macros_page)
     
-    favorites_paginator = Paginator(favorite_macros, 10)
+    favorites_paginator = Paginator(favorite_macros, 20)
     favorites_page = request.GET.get('favorites_page', 1)
     favorite_macros = favorites_paginator.get_page(favorites_page)
     
-    macros_paginator = Paginator(public_macros, 10)
-    macros_page = request.GET.get('macros_page', 1)
-    public_macros = macros_paginator.get_page(macros_page)
+    public_macros_paginator = Paginator(public_macros, 20)
+    public_macros_page = request.GET.get('public_macros_page', 1)
+    public_macros = public_macros_paginator.get_page(public_macros_page)
+    
+    private_macros_paginator = Paginator(private_macros, 20)
+    private_macros_page = request.GET.get('private_macros_page', 1)
+    private_macros = private_macros_paginator.get_page(private_macros_page)
+    
+    # Statistics
+    total_macros = Macro.objects.filter(user=request.user).count()
+    total_public = public_macros_paginator.count
+    total_private = private_macros_paginator.count
     
     context = {
         'profile': user_profile,
-        'keycommands_files': keycommands_files,
+        'profile_user': request.user,  # For template consistency
+        'all_macros': all_macros,
         'favorite_macros': favorite_macros,
         'public_macros': public_macros,
+        'private_macros': private_macros,
+        'total_macros': total_macros,
+        'total_public': total_public,
+        'total_private': total_private,
+        'is_own_profile': True,
     }
     
     return render(request, 'accounts/profile.html', context)
@@ -108,36 +125,29 @@ def edit_profile(request):
 
 
 def public_profile(request, username):
-    """View public profile of a user"""
+    """View public profile of a user - shows only public macros"""
     user = get_object_or_404(User, username=username)
     user_profile = get_object_or_404(UserProfile, user=user)
     
-    # Get user's public key commands files (is_private=False means public)
-    public_keycommands = KeyCommandsFile.objects.filter(
-        user=user, 
-        is_private=False
-    ).order_by('-created_at')
-    
     # Get user's public macros (is_private=False means public)
     public_macros = Macro.objects.filter(
-        keycommands_file__user=user,
+        user=user,
         is_private=False
-    ).select_related('category', 'keycommands_file').order_by('-created_at')
+    ).select_related('user', 'cubase_version').order_by('-created_at')
     
     # Paginate results
-    files_paginator = Paginator(public_keycommands, 10)
-    files_page = request.GET.get('files_page', 1)
-    public_keycommands = files_paginator.get_page(files_page)
-    
-    macros_paginator = Paginator(public_macros, 10)
+    macros_paginator = Paginator(public_macros, 20)
     macros_page = request.GET.get('macros_page', 1)
     public_macros = macros_paginator.get_page(macros_page)
+    
+    # Statistics
+    total_public = macros_paginator.count
     
     context = {
         'profile_user': user,
         'profile': user_profile,
-        'public_keycommands': public_keycommands,
         'public_macros': public_macros,
+        'total_public': total_public,
         'is_own_profile': request.user == user,
     }
     
@@ -149,36 +159,41 @@ def dashboard(request):
     """User dashboard with overview"""
     user_profile, created = UserProfile.objects.get_or_create(user=request.user)
     
-    # Get recent uploads
-    recent_uploads = KeyCommandsFile.objects.filter(
+    # Get recent macros
+    recent_macros = Macro.objects.filter(
         user=request.user
-    ).order_by('-created_at')[:5]
+    ).select_related('user', 'cubase_version').order_by('-created_at')[:5]
     
     # Get recent favorites
     recent_favorites = MacroFavorite.objects.filter(
         user=request.user
-    ).select_related('macro__category', 'macro__keycommands_file__user').order_by('-created_at')[:5]
+    ).select_related('macro__user', 'macro__cubase_version').order_by('-created_at')[:5]
     
     # Get statistics
-    total_uploads = KeyCommandsFile.objects.filter(user=request.user).count()
+    total_macros = Macro.objects.filter(user=request.user).count()
     total_public_macros = Macro.objects.filter(
-        keycommands_file__user=request.user,
+        user=request.user,
         is_private=False
+    ).count()
+    total_private_macros = Macro.objects.filter(
+        user=request.user,
+        is_private=True
     ).count()
     total_favorites = MacroFavorite.objects.filter(user=request.user).count()
     
     # Get popular macros from user (is_private=False means public)
     popular_macros = Macro.objects.filter(
-        keycommands_file__user=request.user,
+        user=request.user,
         is_private=False
-    ).order_by('-view_count', '-download_count')[:5]
+    ).select_related('user', 'cubase_version').order_by('-download_count', '-created_at')[:5]
     
     context = {
         'profile': user_profile,
-        'recent_uploads': recent_uploads,
+        'recent_macros': recent_macros,
         'recent_favorites': recent_favorites,
-        'total_uploads': total_uploads,
+        'total_macros': total_macros,
         'total_public_macros': total_public_macros,
+        'total_private_macros': total_private_macros,
         'total_favorites': total_favorites,
         'popular_macros': popular_macros,
     }

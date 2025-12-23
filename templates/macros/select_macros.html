@@ -13,7 +13,7 @@
                     <h1 class="h3 mb-1">
                         <i class="fas fa-check-square"></i> Select Macros to Download
                     </h1>
-                    <p class="mb-0">Step 1: Choose which macros to embed into your KeyCommands.xml file</p>
+                    <p class="mb-0">Step 1: Choose which macros to embed into your Key Commands.xml file</p>
                 </div>
                 <a href="{% url 'macros:keycommands_detail' keycommands_file.id %}" class="btn btn-outline-light">
                     <i class="fas fa-arrow-left"></i> Back to File
@@ -65,36 +65,12 @@
                 <!-- Macros List -->
                 {% if macros %}
                 <div class="row">
-                    {% regroup macros by category as macros_by_category %}
-                    {% for category in macros_by_category %}
-                    <div class="col-12 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-folder"></i>
-                                        {{ category.grouper.name|default:"Uncategorized" }}
-                                        <span class="badge bg-secondary ms-2">{{ category.list|length }}</span>
-                                    </h6>
-                                    <div class="form-check">
-                                        <input class="form-check-input category-checkbox" type="checkbox" 
-                                               data-category="{{ category.grouper.name|default:'Uncategorized' }}"
-                                               onchange="toggleCategory(this)">
-                                        <label class="form-check-label small text-muted">
-                                            Select All in Category
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    {% for macro in category.list %}
+                    {% for macro in macros %}
                                     <div class="col-lg-6 col-xl-4 mb-3">
                                         <div class="form-check p-3 border rounded macro-item">
                                             <input class="form-check-input macro-checkbox" type="checkbox" 
                                                    name="selected_macros" value="{{ macro.id }}" 
                                                    id="macro_{{ macro.id }}"
-                                                   data-category="{{ category.grouper.name|default:'Uncategorized' }}"
                                                    onchange="updateCounts()">
                                             <label class="form-check-label w-100" for="macro_{{ macro.id }}">
                                                 <div class="macro-details">
@@ -116,8 +92,7 @@
                                                     
                                                     <div class="d-flex justify-content-between align-items-center">
                                                         <small class="text-muted">
-                                                            <i class="fas fa-eye"></i> {{ macro.view_count }}
-                                                            <i class="fas fa-download ms-2"></i> {{ macro.download_count }}
+                                                            <i class="fas fa-download"></i> {{ macro.download_count }}
                                                         </small>
                                                         
                                                         {% if macro.average_rating %}
@@ -269,34 +244,6 @@ function updateCounts() {
         downloadButton.classList.add('btn-secondary');
     }
     
-    // Update category checkboxes
-    const categories = {};
-    document.querySelectorAll('.macro-checkbox').forEach(cb => {
-        const category = cb.dataset.category;
-        if (!categories[category]) {
-            categories[category] = { total: 0, checked: 0 };
-        }
-        categories[category].total++;
-        if (cb.checked) {
-            categories[category].checked++;
-        }
-    });
-    
-    document.querySelectorAll('.category-checkbox').forEach(cb => {
-        const category = cb.dataset.category;
-        const categoryData = categories[category];
-        
-        if (categoryData.checked === 0) {
-            cb.checked = false;
-            cb.indeterminate = false;
-        } else if (categoryData.checked === categoryData.total) {
-            cb.checked = true;
-            cb.indeterminate = false;
-        } else {
-            cb.checked = false;
-            cb.indeterminate = true;
-        }
-    });
 }
 
 // Initialize on page load

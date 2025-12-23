@@ -15,7 +15,7 @@
                     </h1>
                     
                     <p class="text-muted mb-3">
-                        Select macros from the community to embed into your Macros file (KeyCommands.xml). 
+                        Select macros from the community to embed into your Macros file (Key Commands.xml). 
                         The selected macros will be added to your file and you can download the modified version.
                     </p>
                     
@@ -53,18 +53,6 @@
                             <label for="search" class="form-label">Search Macros</label>
                             <input type="text" class="form-control" id="search" name="search" 
                                    value="{{ search_query|default:'' }}" placeholder="Search by name or description...">
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label for="category" class="form-label">Category</label>
-                            <select class="form-select" id="category" name="category">
-                                <option value="">All Categories</option>
-                                {% for category in categories %}
-                                <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ category.name }} ({{ category.macro_count }})
-                                </option>
-                                {% endfor %}
-                            </select>
                         </div>
                         
                         <div class="col-md-4 d-flex align-items-end">
@@ -129,14 +117,6 @@
                             </label>
                         </div>
                         
-                        <!-- Category -->
-                        {% if macro.category %}
-                        <div class="mb-2">
-                            <span class="badge bg-secondary">
-                                <i class="fas fa-folder"></i> {{ macro.category.name }}
-                            </span>
-                        </div>
-                        {% endif %}
                         
                         <!-- Author -->
                         <div class="mb-2">
@@ -179,9 +159,6 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex gap-3">
                                 <small class="text-muted">
-                                    <i class="fas fa-eye"></i> {{ macro.view_count }}
-                                </small>
-                                <small class="text-muted">
                                     <i class="fas fa-download"></i> {{ macro.download_count }}
                                 </small>
                                 {% if macro.avg_rating %}
@@ -206,7 +183,7 @@
             <ul class="pagination justify-content-center">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">Previous</a>
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
                 </li>
                 {% endif %}
                 
@@ -235,7 +212,7 @@
         <div class="text-center py-5">
             <i class="fas fa-search fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">No macros found</h5>
-            {% if search_query or selected_category %}
+            {% if search_query %}
             <p class="text-muted">Try adjusting your search or filter criteria.</p>
             <a href="{% url 'macros:select_macros_for_file' keycommands_file.id %}" class="btn btn-primary">
                 <i class="fas fa-times"></i> Clear Filters
@@ -358,12 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
             searchTimeout = setTimeout(() => {
                 document.getElementById('filter-form').submit();
             }, 500);
-        });
-    }
-    
-    if (categorySelect) {
-        categorySelect.addEventListener('change', function() {
-            document.getElementById('filter-form').submit();
         });
     }
     

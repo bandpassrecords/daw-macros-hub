@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import (
-    CubaseVersion, KeyCommandsFile, MacroCategory, Macro, 
+    CubaseVersion, Macro, 
     MacroVote, MacroFavorite, MacroCollection, MacroDownload
 )
 
@@ -16,45 +16,6 @@ class CubaseVersionAdmin(admin.ModelAdmin):
     ordering = ['-major_version', '-minor_version', '-patch_version']
 
 
-@admin.register(KeyCommandsFile)
-class KeyCommandsFileAdmin(admin.ModelAdmin):
-    list_display = ['name', 'user', 'cubase_version', 'is_private', 'download_count', 'created_at']
-    list_filter = ['is_private', 'cubase_version', 'created_at']
-    search_fields = ['name', 'user__username', 'description']
-    readonly_fields = ['id', 'download_count', 'created_at', 'updated_at']
-    raw_id_fields = ['user']
-    
-    fieldsets = (
-        (None, {
-            'fields': ('id', 'user', 'name', 'description')
-        }),
-        ('Metadata', {
-            'fields': ('cubase_version', 'is_private')
-        }),
-        ('Statistics', {
-            'fields': ('download_count', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    # Exclude file field - files are never stored, only macro snippets are saved
-    exclude = ['file']
-    
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('user', 'cubase_version')
-
-
-@admin.register(MacroCategory)
-class MacroCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'get_macro_count', 'created_at']
-    search_fields = ['name', 'description']
-    readonly_fields = ['created_at']
-    
-    def get_macro_count(self, obj):
-        return obj.macro_set.count()
-    get_macro_count.short_description = 'Macros Count'
-
-
 class MacroVoteInline(admin.TabularInline):
     model = MacroVote
     extra = 0
@@ -65,21 +26,21 @@ class MacroVoteInline(admin.TabularInline):
 @admin.register(Macro)
 class MacroAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'category', 'get_user', 'is_private', 
-        'get_average_rating', 'vote_count', 'view_count', 'download_count'
+        'name', 'get_user', 'is_private', 
+        'get_average_rating', 'vote_count', 'download_count'
     ]
-    list_filter = ['is_private', 'category', 'created_at', 'keycommands_file__cubase_version']
-    search_fields = ['name', 'description', 'keycommands_file__user__username']
+    list_filter = ['is_private', 'created_at', 'cubase_version']
+    search_fields = ['name', 'description', 'user__username']
     readonly_fields = [
-        'id', 'view_count', 'download_count', 'created_at', 'updated_at',
+        'id', 'download_count', 'created_at', 'updated_at',
         'get_average_rating', 'vote_count'
     ]
-    raw_id_fields = ['keycommands_file']
+    raw_id_fields = ['user']
     inlines = [MacroVoteInline]
     
     fieldsets = (
         (None, {
-            'fields': ('id', 'keycommands_file', 'category', 'name', 'description')
+            'fields': ('id', 'user', 'cubase_version', 'name', 'description')
         }),
         ('Settings', {
             'fields': ('key_binding', 'is_private')
@@ -90,7 +51,7 @@ class MacroAdmin(admin.ModelAdmin):
             'description': 'XML snippets stored in database (not files)'
         }),
         ('Statistics', {
-            'fields': ('get_average_rating', 'vote_count', 'view_count', 'download_count'),
+            'fields': ('get_average_rating', 'vote_count', 'download_count'),
             'classes': ('collapse',)
         }),
         ('Timestamps', {
@@ -100,9 +61,9 @@ class MacroAdmin(admin.ModelAdmin):
     )
     
     def get_user(self, obj):
-        return obj.keycommands_file.user.username
+        return obj.user.username
     get_user.short_description = 'User'
-    get_user.admin_order_field = 'keycommands_file__user__username'
+    get_user.admin_order_field = 'user__username'
     
     def get_average_rating(self, obj):
         avg = obj.average_rating
@@ -113,7 +74,7 @@ class MacroAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
-            'keycommands_file__user', 'category'
+            'user', 'cubase_version'
         ).prefetch_related('votes')
 
 

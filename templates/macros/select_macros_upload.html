@@ -53,14 +53,8 @@
                             </small>
                         </div>
                         
-                        <!-- Macros by Category -->
-                        {% for category_name, macros in macros_by_category.items %}
+                        <!-- Macros -->
                         <div class="mb-4">
-                            <h5 class="mb-3">
-                                <i class="fas fa-folder me-2"></i>{{ category_name }}
-                                <span class="badge bg-secondary ms-2">{{ macros|length }}</span>
-                            </h5>
-                            
                             <div class="row g-3">
                                 {% for macro in macros %}
                                 <div class="col-md-6 col-lg-4">
@@ -112,7 +106,6 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        {% endfor %}
                         
                         <!-- Action Buttons -->
                         <div class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top">

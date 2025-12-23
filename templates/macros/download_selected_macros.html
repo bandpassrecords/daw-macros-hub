@@ -70,15 +70,6 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-3">
-                        <select class="form-select form-select-sm" id="category-filter">
-                            <option value="">All Categories</option>
-                            {% for category in categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
                     <div class="col-md-3 text-end">
                         <span class="badge bg-primary" id="selection-count">
                             0 selected
@@ -92,7 +83,7 @@
         {% if macros %}
         <div class="row" id="macros-container">
             {% for macro in macros %}
-            <div class="col-lg-6 col-xl-4 mb-3 macro-item" data-category="{{ macro.category.id|default:'' }}">
+            <div class="col-lg-6 col-xl-4 mb-3 macro-item">
                 <div class="card macro-selection-card">
                     <div class="card-body">
                         <div class="d-flex align-items-start">
@@ -107,13 +98,6 @@
                                     {{ macro.name|truncatechars:45 }}
                                 </h6>
                                 
-                                {% if macro.category %}
-                                <div class="mb-1">
-                                    <span class="badge bg-secondary badge-sm">
-                                        {{ macro.category.name }}
-                                    </span>
-                                </div>
-                                {% endif %}
                                 
                                 {% if macro.key_binding %}
                                 <div class="mb-1">
@@ -140,8 +124,7 @@
                                     
                                     {% if not macro.is_private %}
                                     <small class="text-muted">
-                                        <i class="fas fa-eye"></i> {{ macro.view_count }}
-                                        <i class="fas fa-download ms-1"></i> {{ macro.download_count }}
+                                        <i class="fas fa-download"></i> {{ macro.download_count }}
                                     </small>
                                     {% endif %}
                                 </div>
@@ -254,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectionCount = document.getElementById('selection-count');
     const downloadCount = document.getElementById('download-count');
     const downloadBtn = document.getElementById('download-btn');
-    const categoryFilter = document.getElementById('category-filter');
     
     // Update selection count and download button state
     function updateSelectionCount() {
@@ -319,24 +301,6 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.checked = !checkbox.checked;
             checkbox.dispatchEvent(new Event('change'));
         });
-    });
-    
-    // Category filter
-    categoryFilter.addEventListener('change', function() {
-        const selectedCategory = this.value;
-        const macroItems = document.querySelectorAll('.macro-item');
-        
-        macroItems.forEach(item => {
-            const itemCategory = item.dataset.category;
-            
-            if (selectedCategory === '' || itemCategory === selectedCategory) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-        
-        updateSelectionCount();
     });
     
     // Form submission validation
