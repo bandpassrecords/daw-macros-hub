@@ -181,13 +181,15 @@ LOGOUT_REDIRECT_URL = '/'
 SITE_ID = 1  # Required for allauth
 
 # Allauth Account Settings
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Allow login with username or email
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # Use email only for authentication
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # 'mandatory', 'optional', or 'none'
-ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False  # Username not required
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # Don't use username field
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = False
 ACCOUNT_SESSION_REMEMBER = True  # Remember user login
+ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'  # Use email as primary identifier
 # ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'  # Optional: uncomment if you create a custom adapter
 
 # Social Account Settings
