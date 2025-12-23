@@ -8,4 +8,5 @@ lxml==5.1.0
 beautifulsoup4==4.12.2
 django-crispy-forms==2.1
 crispy-bootstrap4==2023.1
-django-bootstrap4==23.2 
+django-bootstrap4==23.2
+django-allauth==0.57.0 

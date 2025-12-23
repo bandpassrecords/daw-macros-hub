@@ -5,9 +5,15 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
 from django.core.paginator import Paginator
+from allauth.account.views import LoginView as AllauthLoginView
 from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm
 from .models import UserProfile
 from macros.models import Macro, MacroFavorite
+
+
+class CustomLoginView(AllauthLoginView):
+    """Custom login view using allauth but with our template"""
+    template_name = 'accounts/login.html'
 
 
 def register(request):

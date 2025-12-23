@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
 from .models import UserProfile
 
@@ -85,4 +85,30 @@ class UserUpdateForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = True 
+        self.fields['email'].required = True
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+    """Custom password reset form with Bootstrap styling"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Enter your email address'
+        })
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    """Custom set password form with Bootstrap styling"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['new_password1'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Enter new password'
+        })
+        self.fields['new_password2'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Confirm new password'
+        }) 
