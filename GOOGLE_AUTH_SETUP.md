@@ -25,7 +25,7 @@ This will create the necessary database tables for django-allauth.
 2. **Create a New Project (or select existing):**
    - Click on the project dropdown at the top
    - Click "New Project"
-   - Enter project name: "Cubase Macros Hub" (or your preferred name)
+   - Enter project name: "Cubase Macros Shop" (or your preferred name)
    - Click "Create"
 
 3. **Enable Google+ API:**
@@ -38,7 +38,7 @@ This will create the necessary database tables for django-allauth.
    - Click "Create Credentials" > "OAuth client ID"
    - If prompted, configure the OAuth consent screen first:
      - User Type: External (for public use) or Internal (for organization only)
-     - App name: "Cubase Macros Hub"
+     - App name: "Cubase Macros Shop"
      - User support email: Your email
      - Developer contact: Your email
      - Click "Save and Continue"
@@ -48,7 +48,7 @@ This will create the necessary database tables for django-allauth.
 
 5. **Create OAuth Client ID:**
    - Application type: "Web application"
-   - Name: "Cubase Macros Hub Web Client"
+   - Name: "Cubase Macros Shop Web Client"
    - Authorized JavaScript origins:
      - For development: `http://127.0.0.1:8000`
      - For production: `https://yourdomain.com`
@@ -123,7 +123,7 @@ SOCIALACCOUNT_PROVIDERS = {
    - Click on the default site (usually "example.com")
    - Update:
      - Domain name: `127.0.0.1:8000` (for development) or `yourdomain.com` (for production)
-     - Display name: "Cubase Macros Hub"
+     - Display name: "Cubase Macros Shop"
    - Click "Save"
 
 ## Step 4: Test the Integration

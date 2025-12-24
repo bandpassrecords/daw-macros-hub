@@ -48,7 +48,7 @@ Edit `/etc/systemd/system/cubase-macros-shop.service` and update:
 **Example configuration:**
 ```ini
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Hub Django application
+Description=Gunicorn daemon for Cubase Macros Shop Django application
 After=network.target
 
 [Service]
@@ -104,7 +104,7 @@ sudo systemctl status cubase-macros-shop.service
 
 You should see:
 ```
-● cubase-macros-shop.service - Gunicorn daemon for Cubase Macros Hub Django application
+● cubase-macros-shop.service - Gunicorn daemon for Cubase Macros Shop Django application
      Loaded: loaded (/etc/systemd/system/cubase-macros-shop.service; enabled; vendor preset: enabled)
      Active: active (running) since ...
 ```
@@ -363,7 +363,7 @@ Then add to crontab:
 
 ```ini
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Hub Django application
+Description=Gunicorn daemon for Cubase Macros Shop Django application
 After=network.target postgresql.service
 Wants=network-online.target
 

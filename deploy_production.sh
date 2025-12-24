@@ -2,7 +2,7 @@
 
 ###############################################################################
 # Production Deployment Script for CentOS Stream 10
-# Cubase Macros Hub - Django Application
+# Cubase Macros Shop - Django Application
 ###############################################################################
 
 set -e  # Exit on error
@@ -284,7 +284,7 @@ step_create_systemd_service() {
         # This creates /run/gunicorn/ with proper permissions
         cat > "$SERVICE_FILE" << EOF
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Hub Django application
+Description=Gunicorn daemon for Cubase Macros Shop Django application
 After=network.target
 
 [Service]
@@ -667,7 +667,7 @@ step_create_superuser() {
 ###############################################################################
 
 main() {
-    print_header "Cubase Macros Hub - Production Deployment Script"
+    print_header "Cubase Macros Shop - Production Deployment Script"
     print_info "This script will guide you through the production deployment process"
     print_info "Make sure you have the .env file ready with all necessary configuration"
     echo ""

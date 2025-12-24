@@ -1,4 +1,4 @@
-# Cubase Macros Hub
+# Cubase Macros Shop
 
 A Django web application for sharing and managing Cubase Key Commands and macros. Users can upload their Key Commands XML files, share individual macros with the community, and discover popular macros from other users.
 

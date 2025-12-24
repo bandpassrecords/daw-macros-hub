@@ -101,7 +101,7 @@ python3 manage.py createsuperuser
 2. Navigate to Sites > Sites
 3. Update the default site:
    - Domain name: `cms.bandpassrecords.com`
-   - Display name: `Cubase Macros Hub`
+   - Display name: `Cubase Macros Shop`
 
 ### 5. Test the Application
 
@@ -155,7 +155,7 @@ Visit your site and test:
    b. **Add service configuration:**
       ```ini
       [Unit]
-      Description=Gunicorn daemon for Cubase Macros Hub Django application
+      Description=Gunicorn daemon for Cubase Macros Shop Django application
       After=network.target
 
       [Service]

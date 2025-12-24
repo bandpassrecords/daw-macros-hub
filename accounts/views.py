@@ -56,7 +56,7 @@ def signup_email(request):
                 
                 try:
                     send_mail(
-                        subject='Verify your email address - Cubase Macros Hub',
+                        subject='Verify your email address - Cubase Macros Shop',
                         message=plain_message,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[email],
