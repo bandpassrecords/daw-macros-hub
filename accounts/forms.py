@@ -5,14 +5,13 @@ from .models import UserProfile
 
 
 class CustomUserCreationForm(UserCreationForm):
-    """Custom user registration form with additional fields - email only, no username"""
+    """Custom user registration form - email only, no username, no first/last name"""
     email = forms.EmailField(required=True, help_text="Required. Enter a valid email address.")
-    first_name = forms.CharField(max_length=30, required=False, help_text="Optional.")
-    last_name = forms.CharField(max_length=30, required=False, help_text="Optional.")
+    email2 = forms.EmailField(required=True, label="Confirm Email", help_text="Enter the same email address again for verification.")
     
     class Meta:
         model = User
-        fields = ("email", "first_name", "last_name", "password1", "password2")
+        fields = ("email", "email2", "password1", "password2")
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,9 +24,8 @@ class CustomUserCreationForm(UserCreationForm):
             if field_name == 'email':
                 field.widget.attrs['autocomplete'] = 'email'
                 field.help_text = None
-            elif field_name == 'first_name':
-                field.help_text = None
-            elif field_name == 'last_name':
+            elif field_name == 'email2':
+                field.widget.attrs['autocomplete'] = 'email'
                 field.help_text = None
             elif field_name == 'password1':
                 field.widget.attrs['autocomplete'] = 'new-password'
@@ -37,15 +35,35 @@ class CustomUserCreationForm(UserCreationForm):
                 # Remove the default help text for password2
                 field.help_text = None
     
+    def clean_email2(self):
+        """Verify that both email fields match"""
+        email = self.cleaned_data.get('email')
+        email2 = self.cleaned_data.get('email2')
+        if email and email2 and email != email2:
+            raise forms.ValidationError("The two email fields didn't match.")
+        return email2
+    
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
         user.username = self.cleaned_data["email"]  # Set username to email for compatibility
-        user.first_name = self.cleaned_data["first_name"]
-        user.last_name = self.cleaned_data["last_name"]
         if commit:
             user.save()
         return user
+
+
+class DeleteAccountForm(forms.Form):
+    """Form for account deletion with option to delete macros"""
+    delete_macros = forms.BooleanField(
+        required=False,
+        label="I want to delete all my uploaded macros",
+        help_text="If checked, you explicitly confirm you want to delete all your macros. Note: Due to system limitations, macros cannot be kept after account deletion, so they will be removed regardless of this setting."
+    )
+    confirm_delete = forms.BooleanField(
+        required=True,
+        label="I understand this action cannot be undone",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
 
 
 class UserProfileForm(forms.ModelForm):
@@ -123,4 +141,4 @@ class CustomSetPasswordForm(SetPasswordForm):
         self.fields['new_password2'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'Confirm new password'
-        }) 
+        })

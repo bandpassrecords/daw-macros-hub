@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Account - Cubase Macros Hub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Delete Account
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> Warning: This action cannot be undone!
+                        </h5>
+                        <p class="mb-0">
+                            Deleting your account will permanently remove all your data including:
+                        </p>
+                        <ul class="mb-0 mt-2">
+                            <li>Your profile information</li>
+                            <li>Your votes and ratings</li>
+                            <li>Your favorites and collections</li>
+                            <li>Your download history</li>
+                            {% if macro_count > 0 %}
+                            <li><strong>{{ macro_count }} macro(s) you've uploaded</strong> (see option below)</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    {% if macro_count > 0 %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        You have <strong>{{ macro_count }}</strong> macro(s) uploaded. 
+                        <strong>Note:</strong> Due to system limitations, macros cannot be kept after account deletion. 
+                        If you check the box below, you explicitly confirm you want to delete your macros along with your account.
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if macro_count > 0 %}
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.delete_macros }}
+                                <label class="form-check-label" for="{{ form.delete_macros.id_for_label }}">
+                                    {{ form.delete_macros.label }}
+                                </label>
+                                {% if form.delete_macros.help_text %}
+                                <div class="form-text">{{ form.delete_macros.help_text }}</div>
+                                {% endif %}
+                                {% if form.delete_macros.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.delete_macros.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.confirm_delete }}
+                                <label class="form-check-label" for="{{ form.confirm_delete.id_for_label }}">
+                                    <strong>{{ form.confirm_delete.label }}</strong>
+                                </label>
+                                {% if form.confirm_delete.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.confirm_delete.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash-alt"></i> Permanently Delete My Account
+                            </button>
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

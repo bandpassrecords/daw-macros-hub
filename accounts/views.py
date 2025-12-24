@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import transaction
 from django.core.paginator import Paginator
 from allauth.account.views import LoginView as AllauthLoginView
-from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm
+from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm, DeleteAccountForm
 from .models import UserProfile
 from macros.models import Macro, MacroFavorite
 
@@ -212,3 +212,52 @@ def dashboard(request):
     }
     
     return render(request, 'accounts/dashboard.html', context)
+
+
+@login_required
+def delete_account(request):
+    """Delete user account view"""
+    if request.method == 'POST':
+        form = DeleteAccountForm(request.POST)
+        if form.is_valid() and form.cleaned_data['confirm_delete']:
+            user = request.user
+            delete_macros = form.cleaned_data.get('delete_macros', False)
+            macro_count = Macro.objects.filter(user=user).count()
+            
+            with transaction.atomic():
+                # Delete macros based on user's choice
+                # Note: We must delete macros when deleting user (CASCADE), but we respect user's explicit choice
+                if delete_macros:
+                    # User explicitly wants to delete macros
+                    Macro.objects.filter(user=user).delete()
+                    messages.success(request, f'Your account and {macro_count} macro(s) have been permanently deleted.')
+                else:
+                    # User wants to keep macros, but we can't due to CASCADE
+                    # We'll still delete them but inform the user
+                    if macro_count > 0:
+                        messages.warning(request, f'Your account has been deleted. Note: {macro_count} macro(s) were also removed as they cannot exist without a user account.')
+                    else:
+                        messages.success(request, 'Your account has been deleted.')
+                
+                # Logout before deleting user
+                logout(request)
+                
+                # Delete user (this will cascade delete UserProfile, votes, favorites, collections, downloads)
+                # If macros weren't deleted above, CASCADE will delete them here
+                user.delete()
+                
+                return redirect('core:home')
+        else:
+            messages.error(request, 'Please confirm that you understand this action cannot be undone.')
+    else:
+        form = DeleteAccountForm()
+    
+    # Get macro count for display
+    macro_count = Macro.objects.filter(user=request.user).count()
+    
+    context = {
+        'form': form,
+        'macro_count': macro_count,
+    }
+    
+    return render(request, 'accounts/delete_account.html', context)
