@@ -30,7 +30,7 @@ def home(request):
     # Get available Cubase versions
     cubase_versions = CubaseVersion.objects.annotate(
         macro_count=Count('macro', filter=Q(macro__is_private=False))  # is_private=False means public
-    ).filter(macro_count__gt=0).order_by('-major_version', '-minor_version')[:5]
+    ).filter(macro_count__gt=0).order_by('-major_version')[:5]
     
     context = {
         'featured_macros': featured_macros,
