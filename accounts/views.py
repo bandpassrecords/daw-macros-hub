@@ -3,12 +3,13 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.db import transaction
+from django.db import transaction, OperationalError
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
+import time
 from allauth.account.views import LoginView as AllauthLoginView
 from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm, DeleteAccountForm
 from .models import UserProfile, EmailVerification
@@ -30,51 +31,75 @@ def signup_email(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():
-                user = form.save()
-                email = form.cleaned_data.get('email')
-                
-                # Generate verification token
-                token = EmailVerification.generate_token()
-                EmailVerification.objects.create(
-                    user=user,
-                    token=token
-                )
-                
-                # Send verification email
-                verification_url = request.build_absolute_uri(
-                    f'/accounts/verify-email/{token}/'
-                )
-                
-                # Render email template
-                html_message = render_to_string('accounts/email_verification.html', {
-                    'user': user,
-                    'verification_url': verification_url,
-                    'expires_in': '10 minutes',
-                })
-                plain_message = strip_tags(html_message)
-                
+            # Retry logic for SQLite database locks
+            max_retries = 3
+            retry_delay = 0.1  # Start with 100ms
+            
+            user = None
+            token = None
+            email = None
+            
+            for attempt in range(max_retries):
                 try:
-                    send_mail(
-                        subject='Verify your email address - Cubase Macros Shop',
-                        message=plain_message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[email],
-                        html_message=html_message,
-                        fail_silently=False,
-                    )
-                    messages.success(
-                        request,
-                        f'Account created! Please check your email ({email}) and click the verification link to activate your account. The link expires in 10 minutes.'
-                    )
-                    return redirect('accounts:verification_sent')
-                except Exception as e:
-                    # If email fails, delete the user and show error
-                    user.delete()
-                    messages.error(
-                        request,
-                        f'Failed to send verification email. Please try again. Error: {str(e)}'
-                    )
+                    with transaction.atomic():
+                        user = form.save()
+                        email = form.cleaned_data.get('email')
+                        
+                        # Generate verification token
+                        token = EmailVerification.generate_token()
+                        EmailVerification.objects.create(
+                            user=user,
+                            token=token
+                        )
+                    break  # Success, exit retry loop
+                except OperationalError as e:
+                    if 'database is locked' in str(e).lower() and attempt < max_retries - 1:
+                        # Wait before retrying with exponential backoff
+                        time.sleep(retry_delay * (2 ** attempt))
+                        continue
+                    else:
+                        # Re-raise if it's not a lock error or we've exhausted retries
+                        messages.error(request, 'Database is temporarily busy. Please try again in a moment.')
+                        return render(request, 'accounts/signup_email.html', {'form': form})
+            
+            if not user or not token:
+                messages.error(request, 'Failed to create account. Please try again.')
+                return render(request, 'accounts/signup_email.html', {'form': form})
+            
+            # Send verification email (outside retry loop, only if user creation succeeded)
+            verification_url = request.build_absolute_uri(
+                f'/accounts/verify-email/{token}/'
+            )
+            
+            # Render email template
+            html_message = render_to_string('accounts/email_verification.html', {
+                'user': user,
+                'verification_url': verification_url,
+                'expires_in': '10 minutes',
+            })
+            plain_message = strip_tags(html_message)
+            
+            try:
+                send_mail(
+                    subject='Verify your email address - Cubase Macros Shop',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                messages.success(
+                    request,
+                    f'Account created! Please check your email ({email}) and click the verification link to activate your account. The link expires in 10 minutes.'
+                )
+                return redirect('accounts:verification_sent')
+            except Exception as e:
+                # If email fails, delete the user and show error
+                user.delete()
+                messages.error(
+                    request,
+                    f'Failed to send verification email. Please try again. Error: {str(e)}'
+                )
         else:
             messages.error(request, 'Please correct the errors below.')
     else:

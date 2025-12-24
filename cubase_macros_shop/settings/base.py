@@ -100,10 +100,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            'timeout': 20,  # SQLite timeout in seconds
+            'timeout': 30,  # SQLite timeout in seconds (increased for production)
+            'check_same_thread': False,  # Allow multiple threads
         },
-        # Connection pooling for better performance
-        'CONN_MAX_AGE': 600,  # 10 minutes
+        # IMPORTANT: SQLite doesn't support connection pooling well
+        # Set to 0 to close connections immediately (prevents locks)
+        'CONN_MAX_AGE': 0,  # Close connections immediately for SQLite
     }
 }
 
