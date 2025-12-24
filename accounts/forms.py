@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from .models import UserProfile
 
 
@@ -31,10 +32,29 @@ class CustomUserCreationForm(UserCreationForm):
                 # Remove the default help text for password2
                 field.help_text = None
     
+    def clean_email(self):
+        """Validate that email doesn't already exist"""
+        email = self.cleaned_data.get('email')
+        if email:
+            if User.objects.filter(email=email).exists():
+                raise ValidationError('A user with this email address already exists.')
+        return email
+    
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data["email"]
-        user.username = self.cleaned_data["email"]  # Set username to email for compatibility
+        email = self.cleaned_data["email"]
+        user.email = email
+        
+        # Set username to email, but ensure it's unique
+        # If username already exists, append a number
+        base_username = email
+        username = base_username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+        
+        user.username = username
         user.is_active = False  # User must verify email before account is active
         if commit:
             user.save()
