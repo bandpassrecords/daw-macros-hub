@@ -81,30 +81,32 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
-            'bio', 'location', 'website', 'avatar', 'preferred_cubase_version',
-            'show_email', 'show_real_name', 'email_notifications', 'newsletter_subscription'
+            'bio', 'avatar',
+            'show_email', 'show_real_name'
         ]
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Tell us about yourself...'}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Los Angeles, CA'}),
-            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://yourwebsite.com'}),
-            'preferred_cubase_version': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Cubase 13'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control-file'}),
             'show_email': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'show_real_name': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'email_notifications': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'newsletter_subscription': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         help_texts = {
             'bio': 'Brief description about yourself and your music production background.',
-            'location': 'Your location (city, state/country).',
-            'website': 'Your personal website or portfolio.',
-            'preferred_cubase_version': 'The version of Cubase you primarily use.',
             'show_email': 'Allow other users to see your email address.',
-            'show_real_name': 'Use your real name instead of username in public.',
-            'email_notifications': 'Receive email notifications for interactions.',
-            'newsletter_subscription': 'Subscribe to our newsletter for updates.',
+            'show_real_name': 'Display your real name (first name + surname) instead of the generated fake name. Only works if you have both first name and surname set.',
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show show_real_name option if user has first_name and last_name
+        if self.instance and self.instance.user:
+            user = self.instance.user
+            if not (user.first_name and user.last_name):
+                # Hide the field if user doesn't have both names
+                if 'show_real_name' in self.fields:
+                    self.fields['show_real_name'].widget = forms.HiddenInput()
+                    # Set to False if they don't have names
+                    self.initial['show_real_name'] = False
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -114,7 +116,7 @@ class UserUpdateForm(forms.ModelForm):
         model = User
         fields = ['email', 'first_name', 'last_name']
         widgets = {
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'readonly': True}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'readonly': True, 'style': 'background-color: #7e7e7e;'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
         }
@@ -125,7 +127,8 @@ class UserUpdateForm(forms.ModelForm):
         # Make email read-only (cannot be changed)
         # Use readonly instead of disabled so the value is still submitted
         self.fields['email'].widget.attrs['readonly'] = True
-        self.fields['email'].widget.attrs['style'] = 'background-color: #e9ecef; cursor: not-allowed;'
+        # Set light grey background for better contrast
+        self.fields['email'].widget.attrs['style'] = 'background-color: #7e7e7e; cursor: not-allowed;'
         # Remove username field if it exists
         if 'username' in self.fields:
             del self.fields['username']

@@ -77,7 +77,7 @@
                                 {% else %}
                                     <i class="fas fa-user-circle me-2"></i>
                                 {% endif %}
-                                <span>{{ user.profile.display_name }}</span>
+                                <span>{{ user.profile.get_own_profile_display_name }}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}">

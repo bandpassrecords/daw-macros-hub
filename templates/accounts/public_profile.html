@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ profile.public_display_name }} - Profile{% endblock %}
+{% block title %}{{ profile.display_name }} - Profile{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -14,26 +14,20 @@
                         <div class="col-md-8">
                             <h1 class="h3 mb-2">
                                 <i class="fas fa-user"></i> 
-                                {{ profile.public_display_name }}
+                                {{ profile.display_name }}
                             </h1>
+                            
+                            {% if profile.show_email and profile_user.email %}
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-envelope"></i> {{ profile_user.email }}
+                            </p>
+                            {% endif %}
                             
                             {% if profile.bio %}
                             <p class="text-muted mb-3">{{ profile.bio|linebreaks }}</p>
                             {% endif %}
                             
                             <div class="row text-muted">
-                                {% if profile.location %}
-                                <div class="col-sm-6 mb-2">
-                                    <i class="fas fa-map-marker-alt"></i> {{ profile.location }}
-                                </div>
-                                {% endif %}
-                                
-                                {% if profile.preferred_cubase_version %}
-                                <div class="col-sm-6 mb-2">
-                                    <i class="fas fa-compact-disc"></i> {{ profile.preferred_cubase_version.version }}
-                                </div>
-                                {% endif %}
-                                
                                 <div class="col-sm-6 mb-2">
                                     <i class="fas fa-calendar-alt"></i> Joined {{ profile_user.date_joined|date:"M Y" }}
                                 </div>
@@ -167,7 +161,7 @@
                     <i class="fas fa-upload"></i> Upload & Share Macros
                 </a>
                 {% else %}
-                <p class="text-muted">{{ profile.public_display_name }} hasn't shared any macros yet.</p>
+                <p class="text-muted">{{ profile.display_name }} hasn't shared any macros yet.</p>
                 {% endif %}
             </div>
             {% endif %}

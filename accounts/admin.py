@@ -9,8 +9,8 @@ class UserProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Profile'
     fields = [
-        'bio', 'location', 'website', 'avatar', 'preferred_cubase_version',
-        'show_email', 'show_real_name', 'email_notifications', 'newsletter_subscription',
+        'bio', 'avatar',
+        'show_email', 'show_real_name',
         'total_uploads', 'total_downloads'
     ]
     readonly_fields = ['total_uploads', 'total_downloads']
@@ -36,24 +36,20 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'get_display_name', 'location', 'preferred_cubase_version',
+        'user', 'get_display_name',
         'total_uploads', 'total_downloads', 'created_at'
     ]
-    list_filter = ['show_email', 'show_real_name', 'email_notifications', 'newsletter_subscription', 'created_at']
-    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'bio', 'location']
+    list_filter = ['show_email', 'show_real_name', 'created_at']
+    search_fields = ['user__email', 'user__first_name', 'user__last_name', 'bio']
     readonly_fields = ['created_at', 'updated_at', 'total_uploads', 'total_downloads']
     raw_id_fields = ['user']
     
     fieldsets = (
         ('User Info', {
-            'fields': ('user', 'bio', 'location', 'website', 'avatar', 'preferred_cubase_version')
+            'fields': ('user', 'bio', 'avatar')
         }),
         ('Privacy Settings', {
             'fields': ('show_email', 'show_real_name'),
-            'classes': ('collapse',)
-        }),
-        ('Notifications', {
-            'fields': ('email_notifications', 'newsletter_subscription'),
             'classes': ('collapse',)
         }),
         ('Statistics', {

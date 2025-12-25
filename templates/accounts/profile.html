@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ profile_user.profile.display_name }}'s Profile - Cubase Macros Shop{% endblock %}
+{% block title %}{{ profile_user.profile.get_own_profile_display_name }}'s Profile - Cubase Macros Shop{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -11,14 +11,17 @@
             <div class="row align-items-center">
                 <div class="col-md-3 text-center mb-3 mb-md-0">
                     {% if profile_user.profile.avatar %}
-                        <img src="{{ profile_user.profile.avatar.url }}" alt="{{ profile_user.profile.display_name }}" class="rounded-circle profile-avatar mb-3">
+                        <img src="{{ profile_user.profile.avatar.url }}" alt="{{ profile_user.profile.get_own_profile_display_name }}" class="rounded-circle profile-avatar mb-3">
                     {% else %}
                         <div class="profile-avatar-placeholder rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center">
                             <i class="fas fa-user fa-3x text-muted"></i>
                         </div>
                     {% endif %}
                     
-                    <h1 class="h3 mb-1">{{ profile_user.profile.display_name }}</h1>
+                    <h1 class="h3 mb-1">{{ profile_user.profile.get_own_profile_display_name }}</h1>
+                    {% if profile_user == user and profile_user.email %}
+                        <p class="text-muted mb-2">{{ profile_user.email }}</p>
+                    {% endif %}
                     
                     {% if profile_user == user %}
                     <div class="d-flex gap-2 justify-content-center">
@@ -43,29 +46,6 @@
                     
                     <!-- Additional Info -->
                     <div class="row small">
-                        {% if profile_user.profile.location %}
-                        <div class="col-sm-6 mb-2">
-                            <i class="fas fa-map-marker-alt text-muted"></i>
-                            <span class="ms-1">{{ profile_user.profile.location }}</span>
-                        </div>
-                        {% endif %}
-                        
-                        {% if profile_user.profile.website %}
-                        <div class="col-sm-6 mb-2">
-                            <i class="fas fa-link text-muted"></i>
-                            <a href="{{ profile_user.profile.website }}" target="_blank" class="ms-1 text-decoration-none">
-                                Website
-                            </a>
-                        </div>
-                        {% endif %}
-                        
-                        {% if profile_user.profile.preferred_cubase_version %}
-                        <div class="col-sm-6 mb-2">
-                            <i class="fas fa-compact-disc text-muted"></i>
-                            <span class="ms-1">Cubase {{ profile_user.profile.preferred_cubase_version.version }}</span>
-                        </div>
-                        {% endif %}
-                        
                         <div class="col-sm-6 mb-2">
                             <i class="fas fa-calendar text-muted"></i>
                             <span class="ms-1">Joined {{ profile_user.date_joined|date:"M Y" }}</span>

@@ -134,59 +134,6 @@
                             {% endif %}
                         </div>
                         
-                        <!-- Location and Website -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ profile_form.location.id_for_label }}" class="form-label">
-                                        <i class="fas fa-map-marker-alt"></i> Location
-                                    </label>
-                                    {{ profile_form.location }}
-                                    {% if profile_form.location.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ profile_form.location.errors }}
-                                        </div>
-                                    {% endif %}
-                                    {% if profile_form.location.help_text %}
-                                        <div class="form-text">{{ profile_form.location.help_text }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ profile_form.website.id_for_label }}" class="form-label">
-                                        <i class="fas fa-link"></i> Website
-                                    </label>
-                                    {{ profile_form.website }}
-                                    {% if profile_form.website.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ profile_form.website.errors }}
-                                        </div>
-                                    {% endif %}
-                                    {% if profile_form.website.help_text %}
-                                        <div class="form-text">{{ profile_form.website.help_text }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Cubase Version -->
-                        <div class="mb-4">
-                            <label for="{{ profile_form.preferred_cubase_version.id_for_label }}" class="form-label">
-                                <i class="fas fa-compact-disc"></i> Preferred Cubase Version
-                            </label>
-                            {{ profile_form.preferred_cubase_version }}
-                            {% if profile_form.preferred_cubase_version.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ profile_form.preferred_cubase_version.errors }}
-                                </div>
-                            {% endif %}
-                            {% if profile_form.preferred_cubase_version.help_text %}
-                                <div class="form-text">{{ profile_form.preferred_cubase_version.help_text }}</div>
-                            {% endif %}
-                        </div>
-                        
                         <hr class="my-4">
                         
                         <!-- Privacy Settings -->
@@ -204,70 +151,33 @@
                                 </div>
                                 
                                 <div class="form-check mb-3">
-                                    {{ profile_form.show_real_name }}
-                                    <label class="form-check-label" for="{{ profile_form.show_real_name.id_for_label }}">
-                                        Show real name in public profile
-                                    </label>
+                                    {% if user.first_name and user.last_name %}
+                                        {{ profile_form.show_real_name }}
+                                        <label class="form-check-label" for="{{ profile_form.show_real_name.id_for_label }}">
+                                            Show real name in public profile
+                                        </label>
+                                        {% if profile_form.show_real_name.help_text %}
+                                            <div class="form-text">{{ profile_form.show_real_name.help_text }}</div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> 
+                                            <strong>Show Real Name:</strong> To use this option, please set your first name and surname in the "Basic User Information" section above.
+                                        </div>
+                                    {% endif %}
+                                    {% if profile_form.show_real_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ profile_form.show_real_name.errors }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
                             <div class="col-md-6">
-                                <div class="form-check mb-3">
-                                    {{ profile_form.allow_contact }}
-                                    <label class="form-check-label" for="{{ profile_form.allow_contact.id_for_label }}">
-                                        Allow others to contact me
-                                    </label>
-                                </div>
-                                
-                                <div class="form-check mb-3">
-                                    {{ profile_form.show_activity }}
-                                    <label class="form-check-label" for="{{ profile_form.show_activity.id_for_label }}">
-                                        Show my activity publicly
-                                    </label>
-                                </div>
                             </div>
                         </div>
                         
                         <hr class="my-4">
-                        
-                        <!-- Notification Settings -->
-                        <h6 class="mb-3">
-                            <i class="fas fa-bell"></i> Notification Preferences
-                        </h6>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check mb-3">
-                                    {{ profile_form.email_notifications }}
-                                    <label class="form-check-label" for="{{ profile_form.email_notifications.id_for_label }}">
-                                        Email notifications
-                                    </label>
-                                </div>
-                                
-                                <div class="form-check mb-3">
-                                    {{ profile_form.macro_updates }}
-                                    <label class="form-check-label" for="{{ profile_form.macro_updates.id_for_label }}">
-                                        Notify about macro updates
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="form-check mb-3">
-                                    {{ profile_form.weekly_digest }}
-                                    <label class="form-check-label" for="{{ profile_form.weekly_digest.id_for_label }}">
-                                        Weekly digest emails
-                                    </label>
-                                </div>
-                                
-                                <div class="form-check mb-3">
-                                    {{ profile_form.marketing_emails }}
-                                    <label class="form-check-label" for="{{ profile_form.marketing_emails.id_for_label }}">
-                                        Marketing and promotional emails
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
                         
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between pt-3">
