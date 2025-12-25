@@ -237,11 +237,79 @@ step_run_migrations() {
 }
 
 ###############################################################################
-# Step 7: Collect Static Files
+# Step 7: Configure Django Site
+###############################################################################
+
+step_configure_site() {
+    print_header "Step 7: Configure Django Site"
+    
+    if confirm "Configure Django Site object (required for email links and allauth)"; then
+        print_info "Configuring Site object..."
+        cd "$PROJECT_DIR"
+        
+        # Use Python to update the Site object
+        "$VENV_DIR/bin/python" << EOF
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cubase_macros_shop.settings.production')
+django.setup()
+
+from django.contrib.sites.models import Site
+
+try:
+    site = Site.objects.get(id=1)  # SITE_ID = 1
+    old_domain = site.domain
+    old_name = site.name
+    
+    site.domain = '$DOMAIN'
+    site.name = 'Cubase Macros Shop'
+    site.save()
+    
+    print(f"Site updated successfully!")
+    print(f"  Domain: {old_domain} -> {site.domain}")
+    print(f"  Name: {old_name} -> {site.name}")
+except Site.DoesNotExist:
+    print("Creating new Site object...")
+    site = Site.objects.create(
+        id=1,
+        domain='$DOMAIN',
+        name='Cubase Macros Shop'
+    )
+    print(f"Site created successfully!")
+    print(f"  Domain: {site.domain}")
+    print(f"  Name: {site.name}")
+except Exception as e:
+    print(f"Error configuring Site: {e}")
+    exit(1)
+EOF
+        
+        if [ $? -eq 0 ]; then
+            print_success "Django Site configured"
+            print_info "Site domain: $DOMAIN"
+            print_info "Site name: Cubase Macros Shop"
+        else
+            print_error "Failed to configure Django Site"
+            print_warning "You may need to configure it manually in Django admin or shell"
+        fi
+    else
+        print_warning "Skipping Site configuration"
+        print_info "You can configure it later with:"
+        echo "  python manage.py shell"
+        echo "  from django.contrib.sites.models import Site"
+        echo "  site = Site.objects.get(id=1)"
+        echo "  site.domain = '$DOMAIN'"
+        echo "  site.name = 'Cubase Macros Shop'"
+        echo "  site.save()"
+    fi
+}
+
+###############################################################################
+# Step 8: Collect Static Files
 ###############################################################################
 
 step_collect_static() {
-    print_header "Step 7: Collect Static Files"
+    print_header "Step 8: Collect Static Files"
     
     if confirm "Collect static files for production"; then
         print_info "Collecting static files..."
@@ -267,11 +335,11 @@ step_collect_static() {
 }
 
 ###############################################################################
-# Step 8: Create Systemd Service
+# Step 9: Create Systemd Service
 ###############################################################################
 
 step_create_systemd_service() {
-    print_header "Step 8: Create Systemd Service"
+    print_header "Step 9: Create Systemd Service"
     
     if confirm "Create systemd service for Gunicorn"; then
         print_info "Creating systemd service file..."
@@ -350,11 +418,11 @@ EOF
 }
 
 ###############################################################################
-# Step 9: Configure Nginx
+# Step 10: Configure Nginx
 ###############################################################################
 
 step_configure_nginx() {
-    print_header "Step 9: Configure Nginx"
+    print_header "Step 10: Configure Nginx"
     
     if confirm "Create Nginx configuration for $DOMAIN"; then
         print_info "Creating Nginx configuration..."
@@ -406,11 +474,11 @@ EOF
 }
 
 ###############################################################################
-# Step 10: Setup Let's Encrypt SSL
+# Step 11: Setup Let's Encrypt SSL
 ###############################################################################
 
 step_setup_ssl() {
-    print_header "Step 10: Setup Let's Encrypt SSL Certificate"
+    print_header "Step 11: Setup Let's Encrypt SSL Certificate"
     
     if confirm "Install and configure Let's Encrypt SSL certificate"; then
         print_info "Installing Certbot..."
@@ -456,11 +524,11 @@ step_setup_ssl() {
 }
 
 ###############################################################################
-# Step 11: Set File Permissions
+# Step 12: Set File Permissions
 ###############################################################################
 
 step_set_permissions() {
-    print_header "Step 11: Set File Permissions"
+    print_header "Step 12: Set File Permissions"
     
     if confirm "Set proper file permissions for project directory"; then
         print_info "Setting file permissions..."
@@ -523,11 +591,11 @@ step_set_permissions() {
 }
 
 ###############################################################################
-# Step 12: Configure SELinux (CentOS Specific)
+# Step 13: Configure SELinux (CentOS Specific)
 ###############################################################################
 
 step_configure_selinux() {
-    print_header "Step 12: Configure SELinux (CentOS Specific)"
+    print_header "Step 13: Configure SELinux (CentOS Specific)"
     
     if [ -f /usr/sbin/getenforce ]; then
         SELINUX_STATUS=$(getenforce)
@@ -566,11 +634,11 @@ step_configure_selinux() {
 }
 
 ###############################################################################
-# Step 13: Start Services
+# Step 14: Start Services
 ###############################################################################
 
 step_start_services() {
-    print_header "Step 13: Start Services"
+    print_header "Step 14: Start Services"
     
     if confirm "Start and enable Nginx service"; then
         # Check if nginx is already running
@@ -656,11 +724,11 @@ step_start_services() {
 }
 
 ###############################################################################
-# Step 14: Create Superuser (Optional)
+# Step 15: Create Superuser (Optional)
 ###############################################################################
 
 step_create_superuser() {
-    print_header "Step 14: Create Django Superuser (Optional)"
+    print_header "Step 15: Create Django Superuser (Optional)"
     
     if confirm "Create Django superuser account"; then
         cd "$PROJECT_DIR"
@@ -736,6 +804,7 @@ main() {
     step_setup_venv
     step_install_python_deps
     step_run_migrations
+    step_configure_site
     step_collect_static
     step_create_systemd_service
     step_configure_nginx

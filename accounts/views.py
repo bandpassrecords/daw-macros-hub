@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth import views as auth_views
 from django.contrib import messages
 from django.db import transaction, OperationalError
 from django.core.paginator import Paginator
@@ -9,9 +10,10 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 import time
 from allauth.account.views import LoginView as AllauthLoginView
-from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm, DeleteAccountForm
+from .forms import CustomUserCreationForm, UserProfileForm, UserUpdateForm, DeleteAccountForm, CustomPasswordResetForm
 from .models import UserProfile, EmailVerification
 from macros.models import Macro, MacroFavorite
 
@@ -19,6 +21,40 @@ from macros.models import Macro, MacroFavorite
 class CustomLoginView(AllauthLoginView):
     """Custom login view using allauth but with our template"""
     template_name = 'accounts/login.html'
+
+
+class CustomPasswordResetView(auth_views.PasswordResetView):
+    """Custom password reset view that ensures correct domain is used"""
+    template_name = 'accounts/password_reset.html'
+    email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_email_subject.txt'
+    form_class = CustomPasswordResetForm
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Ensure domain is set correctly from the request
+        current_site = get_current_site(self.request)
+        context['domain'] = current_site.domain
+        context['site_name'] = current_site.name or 'Cubase Macros Shop'
+        return context
+    
+    def form_valid(self, form):
+        # Override to ensure domain is correct in email context
+        opts = {
+            'use_https': self.request.is_secure(),
+            'token_generator': self.token_generator,
+            'from_email': settings.DEFAULT_FROM_EMAIL,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.html_email_template_name,
+            'extra_email_context': {
+                'domain': get_current_site(self.request).domain,
+                'site_name': get_current_site(self.request).name or 'Cubase Macros Shop',
+            }
+        }
+        form.save(**opts)
+        return super().form_valid(form)
 
 
 def signup(request):
