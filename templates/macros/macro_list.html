@@ -170,9 +170,15 @@
                                         <i class="{% if macro.is_favorited %}fas{% else %}far{% endif %} fa-heart"></i>
                                         <span class="favorite-count">{{ macro.favorited_by.count }}</span>
                                     </button>
+                                    {% if macro.is_in_cart %}
+                                    <button class="btn btn-sm btn-danger btn-remove-from-cart" data-macro-id="{{ macro.id }}" title="Remove from cart">
+                                        <i class="fas fa-cart-arrow-down"></i> Remove
+                                    </button>
+                                    {% else %}
                                     <button class="btn btn-sm btn-success btn-add-to-cart" data-macro-id="{{ macro.id }}" title="Add to cart">
                                         <i class="fas fa-cart-plus"></i> Add
                                     </button>
+                                    {% endif %}
                                     {% endif %}
                                     
                                     <a href="{% url 'macros:macro_detail' macro.id %}" class="btn btn-sm btn-primary">
@@ -388,72 +394,82 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Initialize add to cart buttons
-    const addToCartButtons = document.querySelectorAll('.btn-add-to-cart');
-    addToCartButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const macroId = this.dataset.macroId;
-            const originalText = this.innerHTML;
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            
-            // Get CSRF token from meta tag or cookie
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
+    // Use event delegation for cart buttons (handles both Add and Remove)
+    document.addEventListener('click', function(e) {
+        // Check if clicked element is a cart button (Add or Remove)
+        const button = e.target.closest('.btn-add-to-cart, .btn-remove-from-cart');
+        if (!button) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const macroId = button.dataset.macroId;
+        const isRemove = button.classList.contains('btn-remove-from-cart');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        // Get CSRF token from meta tag or cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
                     }
                 }
-                return cookieValue;
             }
-            
-            const csrftoken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || getCookie('csrftoken');
-            
-            fetch(`/macros/cart/add/${macroId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken,
-                    'Content-Type': 'application/json',
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.innerHTML = '<i class="fas fa-check"></i> Added';
-                    this.classList.remove('btn-success');
-                    this.classList.add('btn-outline-success');
-                    updateCartBadge(data.cart_count);
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                        this.classList.remove('btn-outline-success');
-                        this.classList.add('btn-success');
-                        this.disabled = false;
-                    }, 2000);
+            return cookieValue;
+        }
+        
+        const csrftoken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || getCookie('csrftoken');
+        
+        // Determine the endpoint based on button state
+        const endpoint = isRemove ? `/macros/cart/remove/${macroId}/` : `/macros/cart/add/${macroId}/`;
+        
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (isRemove) {
+                    // Change button to "Add"
+                    button.classList.remove('btn-danger', 'btn-remove-from-cart');
+                    button.classList.add('btn-success', 'btn-add-to-cart');
+                    button.innerHTML = '<i class="fas fa-cart-plus"></i> Add';
+                    button.title = 'Add to cart';
                 } else {
-                    if (window.showToast) {
-                        showToast(data.message, 'error');
-                    }
-                    this.innerHTML = originalText;
-                    this.disabled = false;
+                    // Change button to "Remove"
+                    button.classList.remove('btn-success', 'btn-add-to-cart');
+                    button.classList.add('btn-danger', 'btn-remove-from-cart');
+                    button.innerHTML = '<i class="fas fa-cart-arrow-down"></i> Remove';
+                    button.title = 'Remove from cart';
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
+                updateCartBadge(data.cart_count);
+                button.disabled = false;
+            } else {
                 if (window.showToast) {
-                    showToast('An error occurred. Please try again.', 'error');
+                    showToast(data.message, 'error');
                 }
-                this.innerHTML = originalText;
-                this.disabled = false;
-            });
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (window.showToast) {
+                showToast('An error occurred. Please try again.', 'error');
+            }
+            button.innerHTML = originalText;
+            button.disabled = false;
         });
     });
     

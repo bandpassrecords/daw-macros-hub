@@ -94,10 +94,32 @@ def macro_list(request):
     for macro in page_obj:
         macro.is_favorited = macro.id in favorited_macro_ids
     
+    # Get cart macro IDs for the current user
+    cart_macro_ids = set()
+    if request.user.is_authenticated:
+        cart = request.session.get('macro_cart', [])
+        # Clean up any deleted macros from cart
+        valid_cart_ids = []
+        for cart_id_str in cart:
+            try:
+                Macro.objects.get(id=cart_id_str)
+                valid_cart_ids.append(cart_id_str)
+            except Macro.DoesNotExist:
+                continue
+        if len(valid_cart_ids) != len(cart):
+            request.session['macro_cart'] = valid_cart_ids
+            request.session.modified = True
+        cart_macro_ids = set(valid_cart_ids)
+    
+    # Add is_in_cart attribute to each macro
+    for macro in page_obj:
+        macro.is_in_cart = str(macro.id) in cart_macro_ids
+    
     context = {
         'page_obj': page_obj,
         'form': form,
         'total_count': paginator.count,
+        'cart_count': len(cart_macro_ids) if request.user.is_authenticated else 0,
     }
     
     return render(request, 'macros/macro_list.html', context)
