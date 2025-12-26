@@ -7,6 +7,7 @@ All security settings are enabled for production use.
 
 from .base import *
 from decouple import config
+import os
 
 # ============================================================================
 # DEBUG SETTINGS
@@ -17,6 +18,43 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Production allowed hosts - MUST be set via environment variable
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='dmh.bandpassrecords.com', cast=Csv())
+
+
+# ============================================================================
+# DATABASE CONFIGURATION (Production - PostgreSQL)
+# ============================================================================
+
+# Use PostgreSQL in production if database configuration is provided
+# Otherwise fall back to SQLite (for development/testing)
+if config('DB_NAME', default=None):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+            'CONN_MAX_AGE': 600,  # Connection pooling for PostgreSQL
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
+        }
+    }
+else:
+    # Fall back to SQLite if PostgreSQL is not configured
+    # This allows the app to run without PostgreSQL for testing
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 30,
+                'check_same_thread': False,
+            },
+            'CONN_MAX_AGE': 0,
+        }
+    }
 
 
 # ============================================================================

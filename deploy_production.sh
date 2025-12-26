@@ -21,6 +21,11 @@ DOMAIN="dmh.bandpassrecords.com"
 SERVICE_USER="nginx"
 SERVICE_GROUP="nginx"
 GUNICORN_WORKERS=3
+DB_NAME="daw_macros_hub"
+DB_USER="daw_macros_hub"
+DB_PASSWORD=""
+DB_HOST="localhost"
+DB_PORT="5432"
 
 ###############################################################################
 # Helper Functions
@@ -108,6 +113,9 @@ step_install_dependencies() {
         
         # Install Python and dependencies
         dnf install -y python3 python3-pip python3-devel gcc gcc-c++ make
+        
+        # Install PostgreSQL development libraries (needed for psycopg2)
+        dnf install -y postgresql-devel
         
         # Install Git
         dnf install -y git
@@ -220,11 +228,161 @@ step_install_python_deps() {
 }
 
 ###############################################################################
-# Step 6: Run Database Migrations
+# Step 6: Install and Configure PostgreSQL
+###############################################################################
+
+step_install_postgresql() {
+    print_header "Step 6: Install and Configure PostgreSQL"
+    
+    if confirm "Install and configure PostgreSQL database"; then
+        print_info "Installing PostgreSQL..."
+        
+        # Install PostgreSQL server and client
+        dnf install -y postgresql-server postgresql-contrib
+        
+        # Initialize PostgreSQL database if not already initialized
+        if [ ! -d "/var/lib/pgsql/data" ] || [ -z "$(ls -A /var/lib/pgsql/data 2>/dev/null)" ]; then
+            print_info "Initializing PostgreSQL database..."
+            postgresql-setup --initdb
+            print_success "PostgreSQL database initialized"
+        else
+            print_info "PostgreSQL database already initialized"
+        fi
+        
+        # Start and enable PostgreSQL
+        systemctl enable postgresql
+        systemctl start postgresql
+        
+        print_success "PostgreSQL installed and started"
+        
+        # Create database and user
+        if confirm "Create PostgreSQL database and user for the application"; then
+            print_info "Creating database and user..."
+            
+            # Get database credentials
+            if [ -z "$DB_PASSWORD" ]; then
+                read -sp "Enter PostgreSQL password for user '$DB_USER': " DB_PASSWORD
+                echo ""
+                read -sp "Confirm password: " DB_PASSWORD_CONFIRM
+                echo ""
+                
+                if [ "$DB_PASSWORD" != "$DB_PASSWORD_CONFIRM" ]; then
+                    print_error "Passwords do not match"
+                    return 1
+                fi
+            fi
+            
+            # Create database and user using psql
+            sudo -u postgres psql << EOF
+-- Create user if not exists
+DO \$\$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_user WHERE usename = '$DB_USER') THEN
+        CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+    ELSE
+        ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+    END IF;
+END
+\$\$;
+
+-- Create database if not exists
+SELECT 'CREATE DATABASE $DB_NAME OWNER $DB_USER'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_NAME')\gexec
+
+-- Grant privileges on database
+GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+
+-- Connect to the new database and grant schema privileges
+\c $DB_NAME
+GRANT ALL ON SCHEMA public TO $DB_USER;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO $DB_USER;
+\q
+EOF
+            
+            if [ $? -eq 0 ]; then
+                print_success "Database and user created successfully"
+                print_info "Database name: $DB_NAME"
+                print_info "Database user: $DB_USER"
+                print_info "Database host: $DB_HOST"
+                print_info "Database port: $DB_PORT"
+                
+                # Update .env file with database settings
+                if [ -f "$PROJECT_DIR/.env" ]; then
+                    print_info "Updating .env file with database settings..."
+                    
+                    # Remove old database settings if they exist
+                    sed -i '/^DATABASE_URL=/d' "$PROJECT_DIR/.env"
+                    sed -i '/^DB_NAME=/d' "$PROJECT_DIR/.env"
+                    sed -i '/^DB_USER=/d' "$PROJECT_DIR/.env"
+                    sed -i '/^DB_PASSWORD=/d' "$PROJECT_DIR/.env"
+                    sed -i '/^DB_HOST=/d' "$PROJECT_DIR/.env"
+                    sed -i '/^DB_PORT=/d' "$PROJECT_DIR/.env"
+                    
+                    # Add new database settings
+                    cat >> "$PROJECT_DIR/.env" << EOF
+
+# PostgreSQL Database Configuration
+DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME
+DB_NAME=$DB_NAME
+DB_USER=$DB_USER
+DB_PASSWORD=$DB_PASSWORD
+DB_HOST=$DB_HOST
+DB_PORT=$DB_PORT
+EOF
+                    
+                    print_success ".env file updated with database settings"
+                else
+                    print_warning ".env file not found, you'll need to add database settings manually"
+                fi
+            else
+                print_error "Failed to create database and user"
+                return 1
+            fi
+        else
+            print_warning "Skipping database and user creation"
+            print_info "You can create them manually with:"
+            echo "  sudo -u postgres psql"
+            echo "  CREATE USER $DB_USER WITH PASSWORD 'your_password';"
+            echo "  CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+            echo "  GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+        fi
+        
+        # Configure PostgreSQL for remote/local connections (if needed)
+        if confirm "Configure PostgreSQL to allow local connections"; then
+            print_info "Configuring PostgreSQL authentication..."
+            
+            PG_HBA="/var/lib/pgsql/data/pg_hba.conf"
+            
+            # Backup original file
+            cp "$PG_HBA" "${PG_HBA}.backup"
+            
+            # Add local connection rule if not present
+            if ! grep -q "^local.*all.*$DB_USER.*md5" "$PG_HBA"; then
+                echo "local   all             $DB_USER                                md5" >> "$PG_HBA"
+            fi
+            
+            if ! grep -q "^host.*all.*$DB_USER.*127.0.0.1/32.*md5" "$PG_HBA"; then
+                echo "host    all             $DB_USER            127.0.0.1/32            md5" >> "$PG_HBA"
+            fi
+            
+            # Reload PostgreSQL configuration
+            systemctl reload postgresql
+            
+            print_success "PostgreSQL authentication configured"
+        fi
+    else
+        print_warning "Skipping PostgreSQL installation"
+        print_info "Make sure PostgreSQL is installed and configured manually"
+    fi
+}
+
+###############################################################################
+# Step 7: Run Database Migrations
 ###############################################################################
 
 step_run_migrations() {
-    print_header "Step 6: Run Database Migrations"
+    print_header "Step 7: Run Database Migrations"
     
     if confirm "Run Django database migrations"; then
         print_info "Running migrations..."
@@ -237,7 +395,7 @@ step_run_migrations() {
 }
 
 ###############################################################################
-# Step 7: Configure Django Site
+# Step 8: Configure Django Site
 ###############################################################################
 
 step_configure_site() {
@@ -305,7 +463,7 @@ EOF
 }
 
 ###############################################################################
-# Step 8: Collect Static Files
+# Step 9: Collect Static Files
 ###############################################################################
 
 step_collect_static() {
@@ -335,7 +493,7 @@ step_collect_static() {
 }
 
 ###############################################################################
-# Step 9: Create Systemd Service
+# Step 10: Create Systemd Service
 ###############################################################################
 
 step_create_systemd_service() {
@@ -356,7 +514,7 @@ step_create_systemd_service() {
         fi
         
         # Create service file
-        SERVICE_FILE="/etc/systemd/system/cubase-macros-shop.service"
+        SERVICE_FILE="/etc/systemd/system/daw-macros-hub.service"
         
         # Use RuntimeDirectory for better systemd integration
         # This creates /run/gunicorn/ with proper permissions
@@ -409,7 +567,7 @@ EOF
         
         # Enable service
         if confirm "Enable service to start on boot"; then
-            systemctl enable cubase-macros-shop.service
+            systemctl enable daw-macros-hub.service
             print_success "Service enabled for auto-start"
         fi
     else
@@ -418,7 +576,7 @@ EOF
 }
 
 ###############################################################################
-# Step 10: Configure Nginx
+# Step 11: Configure Nginx
 ###############################################################################
 
 step_configure_nginx() {
@@ -474,7 +632,7 @@ EOF
 }
 
 ###############################################################################
-# Step 11: Setup Let's Encrypt SSL
+# Step 12: Setup Let's Encrypt SSL
 ###############################################################################
 
 step_setup_ssl() {
@@ -524,11 +682,11 @@ step_setup_ssl() {
 }
 
 ###############################################################################
-# Step 12: Set File Permissions
+# Step 13: Set File Permissions
 ###############################################################################
 
 step_set_permissions() {
-    print_header "Step 12: Set File Permissions"
+    print_header "Step 13: Set File Permissions"
     
     if confirm "Set proper file permissions for project directory"; then
         print_info "Setting file permissions..."
@@ -591,11 +749,11 @@ step_set_permissions() {
 }
 
 ###############################################################################
-# Step 13: Configure SELinux (CentOS Specific)
+# Step 14: Configure SELinux (CentOS Specific)
 ###############################################################################
 
 step_configure_selinux() {
-    print_header "Step 13: Configure SELinux (CentOS Specific)"
+    print_header "Step 14: Configure SELinux (CentOS Specific)"
     
     if [ -f /usr/sbin/getenforce ]; then
         SELINUX_STATUS=$(getenforce)
@@ -634,11 +792,21 @@ step_configure_selinux() {
 }
 
 ###############################################################################
-# Step 14: Start Services
+# Step 15: Start Services
 ###############################################################################
 
 step_start_services() {
-    print_header "Step 14: Start Services"
+    print_header "Step 15: Start Services"
+    
+    if confirm "Start and enable PostgreSQL service"; then
+        if systemctl is-active --quiet postgresql; then
+            print_warning "PostgreSQL is already running"
+        else
+            systemctl start postgresql
+            systemctl enable postgresql
+            print_success "PostgreSQL started and enabled"
+        fi
+    fi
     
     if confirm "Start and enable Nginx service"; then
         # Check if nginx is already running
@@ -712,23 +880,23 @@ step_start_services() {
     fi
     
     if confirm "Start Django application service (Gunicorn)"; then
-        if systemctl start cubase-macros-shop.service; then
-            systemctl status cubase-macros-shop.service --no-pager -l
+        if systemctl start daw-macros-hub.service; then
+            systemctl status daw-macros-hub.service --no-pager -l
             print_success "Django application service started"
         else
             print_error "Failed to start Django application service"
-            print_info "Check the error with: sudo systemctl status cubase-macros-shop.service"
+            print_info "Check the error with: sudo systemctl status daw-macros-hub.service"
             return 1
         fi
     fi
 }
 
 ###############################################################################
-# Step 15: Create Superuser (Optional)
+# Step 16: Create Superuser (Optional)
 ###############################################################################
 
 step_create_superuser() {
-    print_header "Step 15: Create Django Superuser (Optional)"
+    print_header "Step 16: Create Django Superuser (Optional)"
     
     if confirm "Create Django superuser account"; then
         cd "$PROJECT_DIR"
@@ -783,6 +951,19 @@ main() {
     read -p "Enter number of Gunicorn workers (default: $GUNICORN_WORKERS): " WORKERS_INPUT
     GUNICORN_WORKERS="${WORKERS_INPUT:-$GUNICORN_WORKERS}"
     
+    # Get database configuration
+    read -p "Enter PostgreSQL database name (default: $DB_NAME): " DB_NAME_INPUT
+    DB_NAME="${DB_NAME_INPUT:-$DB_NAME}"
+    
+    read -p "Enter PostgreSQL database user (default: $DB_USER): " DB_USER_INPUT
+    DB_USER="${DB_USER_INPUT:-$DB_USER}"
+    
+    read -p "Enter PostgreSQL database host (default: $DB_HOST): " DB_HOST_INPUT
+    DB_HOST="${DB_HOST_INPUT:-$DB_HOST}"
+    
+    read -p "Enter PostgreSQL database port (default: $DB_PORT): " DB_PORT_INPUT
+    DB_PORT="${DB_PORT_INPUT:-$DB_PORT}"
+    
     echo ""
     print_info "Configuration Summary:"
     echo "  Project Directory: $PROJECT_DIR"
@@ -790,6 +971,10 @@ main() {
     echo "  Domain: $DOMAIN"
     echo "  Gunicorn Workers: $GUNICORN_WORKERS"
     echo "  Service User: $SERVICE_USER"
+    echo "  Database Name: $DB_NAME"
+    echo "  Database User: $DB_USER"
+    echo "  Database Host: $DB_HOST"
+    echo "  Database Port: $DB_PORT"
     echo ""
     
     if ! confirm "Continue with deployment using these settings"; then
@@ -803,6 +988,7 @@ main() {
     step_configure_firewall
     step_setup_venv
     step_install_python_deps
+    step_install_postgresql
     step_run_migrations
     step_configure_site
     step_collect_static
@@ -820,15 +1006,18 @@ main() {
     echo ""
     print_info "Next steps:"
     echo "  1. Visit https://$DOMAIN to verify the application"
-    echo "  2. Check service status: sudo systemctl status cubase-macros-shop.service"
+    echo "  2. Check service status: sudo systemctl status daw-macros-hub.service"
     echo "  3. Check Nginx status: sudo systemctl status nginx"
-    echo "  4. View application logs: sudo tail -f /var/log/gunicorn/error.log"
-    echo "  5. View Nginx logs: sudo tail -f /var/log/nginx/error.log"
+    echo "  4. Check PostgreSQL status: sudo systemctl status postgresql"
+    echo "  5. View application logs: sudo tail -f /var/log/gunicorn/error.log"
+    echo "  6. View Nginx logs: sudo tail -f /var/log/nginx/error.log"
     echo ""
     print_info "Useful commands:"
-    echo "  Restart application: sudo systemctl restart cubase-macros-shop.service"
+    echo "  Restart application: sudo systemctl restart daw-macros-hub.service"
     echo "  Restart Nginx: sudo systemctl restart nginx"
-    echo "  View service logs: sudo journalctl -u cubase-macros-shop.service -f"
+    echo "  Restart PostgreSQL: sudo systemctl restart postgresql"
+    echo "  View service logs: sudo journalctl -u daw-macros-hub.service -f"
+    echo "  View PostgreSQL logs: sudo tail -f /var/lib/pgsql/data/log/postgresql-*.log"
     echo ""
 }
 
