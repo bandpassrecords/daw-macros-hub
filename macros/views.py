@@ -175,6 +175,14 @@ def _render_macro_detail(request, macro, is_secret_link=False):
         avg_rating=Avg('votes__rating')
     ).order_by('-avg_rating', '-download_count')[:5]
     
+    # Check if macro is in user's cart
+    is_in_cart = False
+    cart_count = 0
+    if request.user.is_authenticated:
+        cart = request.session.get('macro_cart', [])
+        is_in_cart = str(macro.id) in cart
+        cart_count = len(cart)
+    
     context = {
         'macro': macro,
         'vote_form': vote_form,
@@ -183,6 +191,8 @@ def _render_macro_detail(request, macro, is_secret_link=False):
         'recent_votes': recent_votes,
         'related_macros': related_macros,
         'is_secret_link': is_secret_link,
+        'is_in_cart': is_in_cart,
+        'cart_count': cart_count,
     }
     
     return render(request, 'macros/macro_detail.html', context)

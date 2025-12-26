@@ -567,12 +567,26 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Update cart badge immediately
+                    if (window.updateCartBadge) {
+                        window.updateCartBadge(data.cart_count);
+                    } else {
+                        // Define updateCartBadge if not available
+                        const badges = document.querySelectorAll('#nav-cart-badge, #cart-badge');
+                        badges.forEach(badge => {
+                            if (badge) {
+                                badge.textContent = data.cart_count;
+                                if (data.cart_count > 0) {
+                                    badge.style.display = 'inline-block';
+                                } else {
+                                    badge.style.display = 'none';
+                                }
+                            }
+                        });
+                    }
                     this.innerHTML = '<i class="fas fa-check"></i> Added to Cart';
                     this.classList.remove('btn-success');
                     this.classList.add('btn-outline-success');
-                    if (window.updateCartBadge) {
-                        window.updateCartBadge(data.cart_count);
-                    }
                     setTimeout(() => {
                         this.innerHTML = originalText;
                         this.classList.remove('btn-outline-success');
@@ -596,6 +610,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.disabled = false;
             });
         });
+    }
+    
+    // Update cart badge function (make it available globally)
+    if (!window.updateCartBadge) {
+        window.updateCartBadge = function(count) {
+            const badges = document.querySelectorAll('#nav-cart-badge, #cart-badge');
+            badges.forEach(badge => {
+                if (badge) {
+                    badge.textContent = count;
+                    if (count > 0) {
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            });
+        };
     }
     
     // Initialize toggle visibility button
