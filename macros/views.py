@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
@@ -764,13 +765,51 @@ def upload_and_download(request):
                 del request.session['macro_cart']
                 request.session.modified = True
             
-            # Create download response
-            response = HttpResponse(xml_content, content_type='application/xml')
+            # Store order ID in session for redirect
+            request.session['last_order_id'] = str(order.id)
+            request.session.modified = True
+            
+            # Create HTML response that triggers download and redirects
             filename = f"Key Commands.xml"
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            # Escape XML content for JavaScript (base64 encode)
+            import base64
+            xml_base64 = base64.b64encode(xml_content.encode('utf-8')).decode('utf-8')
+            
+            order_history_url = reverse('macros:order_history')
+            
+            html_content = f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Downloading...</title>
+</head>
+<body>
+    <script>
+        // Create download link
+        const xmlContent = atob('{xml_base64}');
+        const blob = new Blob([xmlContent], {{ type: 'application/xml' }});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '{filename}';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Redirect to order history after download starts
+        setTimeout(function() {{
+            window.location.href = '{order_history_url}';
+        }}, 1000);
+    </script>
+    <p style="text-align: center; padding: 2rem; font-family: Arial, sans-serif;">
+        Downloading your file... You will be redirected to your order history shortly.
+    </p>
+</body>
+</html>'''
             
             messages.success(request, f'Successfully embedded {len(selected_macros)} macro(s) into your file!')
-            return response
+            return HttpResponse(html_content, content_type='text/html')
             
         except Exception as e:
             logger.error(f"Error embedding macros into user file: {e}")

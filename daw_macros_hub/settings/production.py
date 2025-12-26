@@ -16,7 +16,7 @@ from decouple import config
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Production allowed hosts - MUST be set via environment variable
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='cms.bandpassrecords.com', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='dmh.bandpassrecords.com', cast=Csv())
 
 
 # ============================================================================
@@ -34,7 +34,7 @@ EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # Email address (can be overridden with display name format: "Display Name <email@example.com>")
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='DAW Macros Hub <cms@bandpassrecords.com>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='DAW Macros Hub <dmh@bandpassrecords.com>')
 SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
 
 
