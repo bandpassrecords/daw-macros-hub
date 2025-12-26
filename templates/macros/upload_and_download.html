@@ -219,19 +219,109 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFileLabel(file);
     }
     
-    // Form submission handler
+    // Form submission handler - intercept and handle via AJAX
     if (form && uploadBtn) {
         form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
             if (!fileInput.files.length) {
                 if (window.showToast) {
                     showToast('Please select your Key Commands.xml file.', 'warning');
                 }
-                e.preventDefault();
                 return;
             }
             
+            // Disable button and show loading state
             uploadBtn.disabled = true;
+            const originalBtnText = uploadBtn.innerHTML;
             uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            // Create FormData
+            const formData = new FormData(form);
+            
+            // Submit via fetch
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                // Check if download was successful (XML file)
+                if (response.headers.get('X-Download-Success') === 'true') {
+                    // Get the blob
+                    return response.blob().then(blob => {
+                        // Create download link
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'Key Commands.xml';
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        
+                        // Wait for user to save the file before redirecting
+                        let redirectTimeout;
+                        let hasRedirected = false;
+                        const orderHistoryUrl = '{% url "macros:order_history" %}';
+                        
+                        // Function to redirect (only once)
+                        function doRedirect() {
+                            if (!hasRedirected) {
+                                hasRedirected = true;
+                                if (redirectTimeout) {
+                                    clearTimeout(redirectTimeout);
+                                }
+                                window.location.href = orderHistoryUrl;
+                            }
+                        }
+                        
+                        // Method 1: Wait for window focus (user came back after saving)
+                        let focusHandler = function() {
+                            // Wait a bit after focus to ensure file was saved
+                            redirectTimeout = setTimeout(doRedirect, 1000);
+                            window.removeEventListener('focus', focusHandler);
+                        };
+                        window.addEventListener('focus', focusHandler);
+                        
+                        // Method 2: Wait for visibility change (user switched back to tab)
+                        let visibilityHandler = function() {
+                            if (!document.hidden) {
+                                redirectTimeout = setTimeout(doRedirect, 1000);
+                                document.removeEventListener('visibilitychange', visibilityHandler);
+                            }
+                        };
+                        document.addEventListener('visibilitychange', visibilityHandler);
+                        
+                        // Method 3: Fallback - redirect after reasonable delay (5 seconds)
+                        // This ensures redirect happens even if focus/visibility events don't fire
+                        redirectTimeout = setTimeout(doRedirect, 5000);
+                    });
+                } else {
+                    // Handle redirects or errors - check if response is a redirect
+                    if (response.redirected || response.status === 302 || response.status === 301) {
+                        // Follow redirect
+                        window.location.href = response.url;
+                    } else {
+                        // Try to get error message
+                        return response.text().then(html => {
+                            // Reload page to show error messages
+                            window.location.reload();
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalBtnText;
+                if (window.showToast) {
+                    showToast('An error occurred. Please try again.', 'error');
+                }
+            });
         });
     }
 });
