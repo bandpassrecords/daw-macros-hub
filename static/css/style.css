@@ -631,12 +631,18 @@ html {
         width: 100%;
     }
     
+    .navbar-nav .nav-link {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem !important;
+    }
+    
     .navbar-nav .nav-link span {
-        display: none;
+        display: inline;
     }
     
     .navbar-nav .nav-link i {
-        font-size: 1.25rem;
+        font-size: 0.9rem;
+        margin-right: 0.25rem;
     }
 }
 

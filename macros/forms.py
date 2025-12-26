@@ -180,18 +180,12 @@ class MacroVoteForm(forms.ModelForm):
     
     class Meta:
         model = MacroVote
-        fields = ['rating', 'comment']
+        fields = ['rating']
         widgets = {
             'rating': forms.Select(attrs={'class': 'form-control'}),
-            'comment': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Share your thoughts about this macro (optional)'
-            }),
         }
         help_texts = {
             'rating': 'Rate this macro from 1 to 5 stars.',
-            'comment': 'Optional comment about your experience with this macro.',
         }
 
 

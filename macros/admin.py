@@ -19,7 +19,7 @@ class CubaseVersionAdmin(admin.ModelAdmin):
 class MacroVoteInline(admin.TabularInline):
     model = MacroVote
     extra = 0
-    readonly_fields = ['user', 'rating', 'comment', 'created_at']
+    readonly_fields = ['user', 'rating', 'created_at']
     raw_id_fields = ['user']
 
 
@@ -82,7 +82,7 @@ class MacroAdmin(admin.ModelAdmin):
 class MacroVoteAdmin(admin.ModelAdmin):
     list_display = ['macro', 'user', 'rating', 'created_at']
     list_filter = ['rating', 'created_at']
-    search_fields = ['macro__name', 'user__username', 'comment']
+    search_fields = ['macro__name', 'user__username']
     readonly_fields = ['created_at', 'updated_at']
     raw_id_fields = ['macro', 'user']
     
