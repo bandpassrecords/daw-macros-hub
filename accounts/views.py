@@ -406,22 +406,57 @@ def delete_account(request):
         if form.is_valid() and form.cleaned_data['confirm_delete']:
             user = request.user
             delete_macros = form.cleaned_data.get('delete_macros', False)
-            macro_count = Macro.objects.filter(user=user).count()
+            private_macros_action = form.cleaned_data.get('private_macros_action', '')
+            
+            # Get macro counts
+            total_macros = Macro.objects.filter(user=user).count()
+            public_macros_count = Macro.objects.filter(user=user, is_private=False).count()
+            private_macros_count = Macro.objects.filter(user=user, is_private=True).count()
             
             with transaction.atomic():
                 # Handle macros based on user's choice
                 if delete_macros:
-                    # User explicitly wants to delete macros
+                    # User explicitly wants to delete all macros
                     Macro.objects.filter(user=user).delete()
-                    messages.success(request, f'Your account and {macro_count} macro(s) have been permanently deleted.')
+                    messages.success(request, f'Your account and {total_macros} macro(s) have been permanently deleted.')
                 else:
-                    # User wants to preserve macros - reassign them to deleted user
-                    if macro_count > 0:
-                        deleted_user = get_deleted_user()
+                    # User wants to preserve macros (at least public ones)
+                    deleted_user = get_deleted_user()
+                    
+                    if private_macros_action == 'make_public':
+                        # Make private macros public and reassign all to deleted user
+                        Macro.objects.filter(user=user, is_private=True).update(is_private=False)
                         Macro.objects.filter(user=user).update(user=deleted_user)
-                        messages.success(request, f'Your account has been deleted. {macro_count} macro(s) have been preserved and are now attributed to "Deleted Account".')
+                        messages.success(
+                            request, 
+                            f'Your account has been deleted. {private_macros_count} private macro(s) have been made public, '
+                            f'and all {total_macros} macro(s) have been preserved and are now attributed to "Deleted Account".'
+                        )
+                    elif private_macros_action == 'delete_private':
+                        # Delete only private macros, preserve public ones
+                        Macro.objects.filter(user=user, is_private=True).delete()
+                        if public_macros_count > 0:
+                            Macro.objects.filter(user=user).update(user=deleted_user)
+                            messages.success(
+                                request,
+                                f'Your account has been deleted. {private_macros_count} private macro(s) have been deleted. '
+                                f'{public_macros_count} public macro(s) have been preserved and are now attributed to "Deleted Account".'
+                            )
+                        else:
+                            messages.success(
+                                request,
+                                f'Your account has been deleted. {private_macros_count} private macro(s) have been deleted.'
+                            )
                     else:
-                        messages.success(request, 'Your account has been deleted.')
+                        # Fallback: preserve all macros (shouldn't happen due to form validation)
+                        if total_macros > 0:
+                            Macro.objects.filter(user=user).update(user=deleted_user)
+                            messages.success(
+                                request,
+                                f'Your account has been deleted. {total_macros} macro(s) have been preserved and are now attributed to "Deleted Account".'
+                            )
+                        else:
+                            messages.success(request, 'Your account has been deleted.')
                 
                 # Logout before deleting user
                 logout(request)
@@ -432,16 +467,25 @@ def delete_account(request):
                 
                 return redirect('core:home')
         else:
-            messages.error(request, 'Please confirm that you understand this action cannot be undone.')
+            if form.errors:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
+            else:
+                messages.error(request, 'Please confirm that you understand this action cannot be undone.')
     else:
         form = DeleteAccountForm()
     
-    # Get macro count for display
-    macro_count = Macro.objects.filter(user=request.user).count()
+    # Get macro counts for display
+    total_macros = Macro.objects.filter(user=request.user).count()
+    public_macros_count = Macro.objects.filter(user=request.user, is_private=False).count()
+    private_macros_count = Macro.objects.filter(user=request.user, is_private=True).count()
     
     context = {
         'form': form,
-        'macro_count': macro_count,
+        'macro_count': total_macros,
+        'public_macros_count': public_macros_count,
+        'private_macros_count': private_macros_count,
     }
     
     return render(request, 'accounts/delete_account.html', context)

@@ -115,13 +115,37 @@ class DeleteAccountForm(forms.Form):
     delete_macros = forms.BooleanField(
         required=False,
         label="I want to delete all my uploaded macros",
-        help_text="If checked, you explicitly confirm you want to delete all your macros. If unchecked, your macros will be preserved and attributed to 'Deleted Account'."
+        help_text="If checked, you explicitly confirm you want to delete all your macros."
+    )
+    private_macros_action = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('', '-- Select an option --'),
+            ('make_public', 'Make private macros public'),
+            ('delete_private', 'Delete only private macros'),
+        ],
+        label="What should happen to your private macros?",
+        help_text="This option only applies if you don't check 'delete all macros'. Public macros will be preserved and attributed to 'Deleted Account'.",
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
     confirm_delete = forms.BooleanField(
         required=True,
         label="I understand this action cannot be undone",
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        delete_macros = cleaned_data.get('delete_macros', False)
+        private_macros_action = cleaned_data.get('private_macros_action', '')
+        
+        # If delete_macros is not checked, private_macros_action is required
+        if not delete_macros and not private_macros_action:
+            raise forms.ValidationError(
+                "Please select what should happen to your private macros, or check the box to delete all macros."
+            )
+        
+        return cleaned_data
 
 
 class UserProfileForm(forms.ModelForm):

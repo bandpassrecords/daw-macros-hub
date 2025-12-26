@@ -35,13 +35,21 @@
                     {% if macro_count > 0 %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> 
-                        You have <strong>{{ macro_count }}</strong> macro(s) uploaded. 
-                        If you <strong>do not</strong> check the box below, your macros will be preserved and attributed to "Deleted Account". 
-                        If you check the box, you explicitly confirm you want to delete your macros along with your account.
+                        You have <strong>{{ macro_count }}</strong> macro(s) uploaded 
+                        {% if private_macros_count > 0 and public_macros_count > 0 %}
+                            (<strong>{{ public_macros_count }}</strong> public, <strong>{{ private_macros_count }}</strong> private).
+                        {% elif private_macros_count > 0 %}
+                            (all <strong>{{ private_macros_count }}</strong> are private).
+                        {% elif public_macros_count > 0 %}
+                            (all <strong>{{ public_macros_count }}</strong> are public).
+                        {% endif %}
+                        <br><br>
+                        <strong>Option 1:</strong> Check the box below to delete all macros along with your account.<br>
+                        <strong>Option 2:</strong> Leave the box unchecked and choose what to do with your private macros below.
                     </div>
                     {% endif %}
                     
-                    <form method="post">
+                    <form method="post" id="deleteAccountForm">
                         {% csrf_token %}
                         
                         {% if macro_count > 0 %}
@@ -49,7 +57,7 @@
                             <div class="form-check">
                                 {{ form.delete_macros }}
                                 <label class="form-check-label" for="{{ form.delete_macros.id_for_label }}">
-                                    {{ form.delete_macros.label }}
+                                    <strong>{{ form.delete_macros.label }}</strong>
                                 </label>
                                 {% if form.delete_macros.help_text %}
                                 <div class="form-text">{{ form.delete_macros.help_text }}</div>
@@ -61,6 +69,23 @@
                                 {% endif %}
                             </div>
                         </div>
+                        
+                        {% if private_macros_count > 0 %}
+                        <div class="mb-4" id="privateMacrosOptions">
+                            <label for="{{ form.private_macros_action.id_for_label }}" class="form-label">
+                                {{ form.private_macros_action.label }}
+                            </label>
+                            {{ form.private_macros_action }}
+                            {% if form.private_macros_action.help_text %}
+                            <div class="form-text">{{ form.private_macros_action.help_text }}</div>
+                            {% endif %}
+                            {% if form.private_macros_action.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.private_macros_action.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         {% endif %}
                         
                         <div class="mb-4">
@@ -97,5 +122,35 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteMacrosCheckbox = document.getElementById('{{ form.delete_macros.id_for_label }}');
+    const privateMacrosOptions = document.getElementById('privateMacrosOptions');
+    const privateMacrosSelect = document.getElementById('{{ form.private_macros_action.id_for_label }}');
+    
+    if (deleteMacrosCheckbox && privateMacrosOptions && privateMacrosSelect) {
+        // Function to toggle private macros options visibility
+        function togglePrivateMacrosOptions() {
+            if (deleteMacrosCheckbox.checked) {
+                privateMacrosOptions.style.display = 'none';
+                privateMacrosSelect.value = '';
+                privateMacrosSelect.required = false;
+            } else {
+                privateMacrosOptions.style.display = 'block';
+                privateMacrosSelect.required = true;
+            }
+        }
+        
+        // Initial state
+        togglePrivateMacrosOptions();
+        
+        // Listen for changes
+        deleteMacrosCheckbox.addEventListener('change', togglePrivateMacrosOptions);
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}
 
