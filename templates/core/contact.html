@@ -12,127 +12,45 @@
                     <h1 class="mb-0">
                         <i class="fas fa-envelope me-2"></i>Contact Us
                     </h1>
-                    <p class="mb-0 mt-2 opacity-75">We'd love to hear from you! Send us a message and we'll respond as soon as possible.</p>
+                    <p class="mb-0 mt-2 opacity-75">We'd love to hear from you! Send us an email and we'll respond as soon as possible.</p>
                 </div>
                 
                 <div class="card-body p-4 p-md-5">
                     <div class="row">
-                        <!-- Contact Form -->
+                        <!-- Contact Instructions -->
                         <div class="col-lg-8">
                             <h2 class="h4 mb-4">
-                                <i class="fas fa-paper-plane me-2 text-primary"></i>Send us a Message
+                                <i class="fas fa-envelope me-2 text-primary"></i>Send us an Email
                             </h2>
                             
-                            <form method="post" action="{% url 'core:contact' %}" id="contactForm">
-                                {% csrf_token %}
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-6 mb-3 mb-md-0">
-                                        <label for="name" class="form-label">
-                                            <i class="fas fa-user me-1"></i>Your Name <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" class="form-control" id="name" name="name" 
-                                               value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.profile.display_name }}{% endif %}" 
-                                               required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label">
-                                            <i class="fas fa-envelope me-1"></i>Email Address <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="email" class="form-control" id="email" name="email" 
-                                               value="{% if user.is_authenticated %}{{ user.email }}{% endif %}" 
-                                               required>
-                                    </div>
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>To contact us, please send an email to:</strong>
+                                <div class="mt-3">
+                                    <h4 class="mb-0">
+                                        <a href="mailto:cms@bandpassrecords.com" class="text-decoration-none">
+                                            <i class="fas fa-envelope me-2"></i>
+                                            cms@bandpassrecords.com
+                                        </a>
+                                    </h4>
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <label for="subject" class="form-label">
-                                        <i class="fas fa-tag me-1"></i>Subject <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-select" id="subject" name="subject" required>
-                                        <option value="">Select a subject...</option>
-                                        <option value="general">General Inquiry</option>
-                                        <option value="support">Technical Support</option>
-                                        <option value="bug">Report a Bug</option>
-                                        <option value="feature">Feature Request</option>
-                                        <option value="partnership">Partnership/Business</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="message" class="form-label">
-                                        <i class="fas fa-comment-alt me-1"></i>Message <span class="text-danger">*</span>
-                                    </label>
-                                    <textarea class="form-control" id="message" name="message" rows="6" 
-                                              placeholder="Please provide as much detail as possible..." required></textarea>
-                                    <div class="form-text">Minimum 10 characters required.</div>
-                                </div>
-                                
-                                {% if messages %}
-                                    <div class="mb-3">
-                                        {% for message in messages %}
-                                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
-                                                {{ message }}
-                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-paper-plane me-2"></i>Send Message
-                                    </button>
-                                </div>
-                            </form>
+                            </div>
                         </div>
                         
-                        <!-- Contact Information -->
+                        <!-- Quick Links -->
                         <div class="col-lg-4 mt-5 mt-lg-0">
                             <h2 class="h4 mb-4">
-                                <i class="fas fa-info-circle me-2 text-primary"></i>Get in Touch
+                                <i class="fas fa-link me-2 text-primary"></i>Quick Links
                             </h2>
                             
                             <div class="contact-info">
                                 <div class="mb-4">
                                     <div class="d-flex align-items-start mb-3">
                                         <div class="contact-icon me-3">
-                                            <i class="fas fa-envelope fa-lg text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="mb-1">Email</h5>
-                                            <p class="text-muted mb-0">
-                                                <a href="mailto:support@cubasemacroshop.com" class="text-decoration-none">
-                                                    support@cubasemacroshop.com
-                                                </a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <div class="d-flex align-items-start mb-3">
-                                        <div class="contact-icon me-3">
-                                            <i class="fas fa-clock fa-lg text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="mb-1">Response Time</h5>
-                                            <p class="text-muted mb-0">
-                                                We typically respond within 24-48 hours
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <div class="d-flex align-items-start mb-3">
-                                        <div class="contact-icon me-3">
                                             <i class="fas fa-question-circle fa-lg text-primary"></i>
                                         </div>
                                         <div>
-                                            <h5 class="mb-1">Need Help?</h5>
+                                            <h5 class="mb-1" style="color: #6c757d;">Need Help?</h5>
                                             <p class="text-muted mb-0">
                                                 Check out our <a href="{% url 'core:help' %}" class="text-decoration-none">Help & FAQ</a> page first
                                             </p>
@@ -143,36 +61,19 @@
                                 <div class="mb-4">
                                     <div class="d-flex align-items-start mb-3">
                                         <div class="contact-icon me-3">
-                                            <i class="fas fa-bug fa-lg text-primary"></i>
+                                            <i class="fab fa-github fa-lg text-primary"></i>
                                         </div>
                                         <div>
-                                            <h5 class="mb-1">Found a Bug?</h5>
-                                            <p class="text-muted mb-0">
-                                                Please include steps to reproduce and any error messages
+                                            <h5 class="mb-1" style="color: #6c757d;">Found a Bug?</h5>
+                                            <p class="text-muted mb-2">
+                                                Please open an issue on GitHub and include steps to reproduce and any error messages.
                                             </p>
+                                            <a href="https://github.com/bandpassrecords/cubase-macros-shop/issues" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                                                <i class="fab fa-github me-2"></i>Open an Issue
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mt-4 p-3 bg-light rounded">
-                                <h5 class="mb-3">
-                                    <i class="fas fa-lightbulb me-2 text-warning"></i>Before Contacting
-                                </h5>
-                                <ul class="list-unstyled mb-0 small">
-                                    <li class="mb-2">
-                                        <i class="fas fa-check text-success me-2"></i>
-                                        Check our <a href="{% url 'core:help' %}" class="text-decoration-none">Help page</a> for common questions
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="fas fa-check text-success me-2"></i>
-                                        Search existing macros before requesting features
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="fas fa-check text-success me-2"></i>
-                                        Include your Cubase version when reporting issues
-                                    </li>
-                                </ul>
                             </div>
                         </div>
                     </div>
@@ -214,11 +115,6 @@
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     }
     
-    #contactForm textarea {
-        resize: vertical;
-        min-height: 120px;
-    }
-    
     .card-header {
         border-bottom: none;
     }
@@ -227,37 +123,5 @@
         background-color: #f8f9fa !important;
     }
 </style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Form validation
-    document.getElementById('contactForm').addEventListener('submit', function(e) {
-        const message = document.getElementById('message').value.trim();
-        if (message.length < 10) {
-            e.preventDefault();
-            alert('Please enter a message with at least 10 characters.');
-            return false;
-        }
-    });
-    
-    // Character counter for message
-    const messageTextarea = document.getElementById('message');
-    const messageLabel = document.querySelector('label[for="message"]');
-    let charCount = document.createElement('small');
-    charCount.className = 'text-muted ms-2';
-    charCount.id = 'charCount';
-    messageLabel.appendChild(charCount);
-    
-    messageTextarea.addEventListener('input', function() {
-        const length = this.value.length;
-        charCount.textContent = `(${length} characters)`;
-        if (length < 10) {
-            charCount.className = 'text-danger ms-2';
-        } else {
-            charCount.className = 'text-success ms-2';
-        }
-    });
-</script>
 {% endblock %}
 
