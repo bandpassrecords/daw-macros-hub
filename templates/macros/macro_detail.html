@@ -179,7 +179,7 @@
                         {% endif %}
                         
                         {% if user.is_authenticated and user == macro.user %}
-                        <button class="btn btn-outline-danger mt-3" onclick="confirmMacroDeletion('{{ macro.id }}')">
+                        <button class="btn btn-outline-danger" onclick="confirmMacroDeletion('{{ macro.id }}')">
                             <i class="fas fa-trash"></i> Delete Macro
                         </button>
                         {% endif %}
