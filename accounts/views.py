@@ -18,6 +18,46 @@ from .models import UserProfile, EmailVerification
 from macros.models import Macro, MacroFavorite
 
 
+def get_deleted_user():
+    """Get or create a system user for deleted accounts"""
+    username = 'deleted_account'
+    email = 'deleted@system.local'
+    
+    deleted_user, created = User.objects.get_or_create(
+        username=username,
+        defaults={
+            'email': email,
+            'first_name': 'Deleted',
+            'last_name': 'Account',
+            'is_active': False,  # Cannot log in
+            'is_staff': False,
+            'is_superuser': False,
+        }
+    )
+    
+    # Ensure user is inactive
+    if not deleted_user.is_active:
+        deleted_user.is_active = False
+        deleted_user.save()
+    
+    # Create or get profile for deleted user
+    profile, _ = UserProfile.objects.get_or_create(
+        user=deleted_user,
+        defaults={
+            'generated_display_name': 'Deleted Account',
+            'show_email': False,
+            'show_real_name': False,
+        }
+    )
+    
+    # Ensure display name is set
+    if not profile.generated_display_name:
+        profile.generated_display_name = 'Deleted Account'
+        profile.save()
+    
+    return deleted_user
+
+
 class CustomLoginView(AllauthLoginView):
     """Custom login view using allauth but with our template"""
     template_name = 'accounts/login.html'
@@ -281,6 +321,11 @@ def public_profile(request, slug):
     user_profile = get_object_or_404(UserProfile, public_id=slug)
     user = user_profile.user
     
+    # Prevent access to deleted account profile
+    if user.username == 'deleted_account' or user.email == 'deleted@system.local':
+        messages.info(request, 'This account has been deleted.')
+        return redirect('macros:macro_list')
+    
     # Get user's public macros (is_private=False means public)
     public_macros = Macro.objects.filter(
         user=user,
@@ -364,17 +409,17 @@ def delete_account(request):
             macro_count = Macro.objects.filter(user=user).count()
             
             with transaction.atomic():
-                # Delete macros based on user's choice
-                # Note: We must delete macros when deleting user (CASCADE), but we respect user's explicit choice
+                # Handle macros based on user's choice
                 if delete_macros:
                     # User explicitly wants to delete macros
                     Macro.objects.filter(user=user).delete()
                     messages.success(request, f'Your account and {macro_count} macro(s) have been permanently deleted.')
                 else:
-                    # User wants to keep macros, but we can't due to CASCADE
-                    # We'll still delete them but inform the user
+                    # User wants to preserve macros - reassign them to deleted user
                     if macro_count > 0:
-                        messages.warning(request, f'Your account has been deleted. Note: {macro_count} macro(s) were also removed as they cannot exist without a user account.')
+                        deleted_user = get_deleted_user()
+                        Macro.objects.filter(user=user).update(user=deleted_user)
+                        messages.success(request, f'Your account has been deleted. {macro_count} macro(s) have been preserved and are now attributed to "Deleted Account".')
                     else:
                         messages.success(request, 'Your account has been deleted.')
                 
@@ -382,7 +427,7 @@ def delete_account(request):
                 logout(request)
                 
                 # Delete user (this will cascade delete UserProfile, votes, favorites, collections, downloads)
-                # If macros weren't deleted above, CASCADE will delete them here
+                # Macros have already been reassigned or deleted above
                 user.delete()
                 
                 return redirect('core:home')

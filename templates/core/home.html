@@ -63,9 +63,13 @@
                     
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <small class="text-muted">
-                            by <a href="{% url 'accounts:public_profile' macro.user.profile.public_id %}" class="text-decoration-none">
+                            by {% if macro.user.username == 'deleted_account' or macro.user.email == 'deleted@system.local' %}
                                 {{ macro.user.profile.display_name }}
-                            </a>
+                            {% else %}
+                                <a href="{% url 'accounts:public_profile' macro.user.profile.public_id %}" class="text-decoration-none">
+                                    {{ macro.user.profile.display_name }}
+                                </a>
+                            {% endif %}
                         </small>
                         
                         

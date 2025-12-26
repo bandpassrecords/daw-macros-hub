@@ -53,7 +53,9 @@
                                 <tr>
                                     <td><strong>Author:</strong></td>
                                     <td>
-                                        {% if macro.user.profile.public_id %}
+                                        {% if macro.user.username == 'deleted_account' or macro.user.email == 'deleted@system.local' %}
+                                            {{ macro.user.profile.display_name }}
+                                        {% elif macro.user.profile.public_id %}
                                             <a href="{% url 'accounts:public_profile' macro.user.profile.public_id %}">
                                                 {{ macro.user.profile.display_name }}
                                             </a>

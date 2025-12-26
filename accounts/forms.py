@@ -66,7 +66,7 @@ class DeleteAccountForm(forms.Form):
     delete_macros = forms.BooleanField(
         required=False,
         label="I want to delete all my uploaded macros",
-        help_text="If checked, you explicitly confirm you want to delete all your macros. Note: Due to system limitations, macros cannot be kept after account deletion, so they will be removed regardless of this setting."
+        help_text="If checked, you explicitly confirm you want to delete all your macros. If unchecked, your macros will be preserved and attributed to 'Deleted Account'."
     )
     confirm_delete = forms.BooleanField(
         required=True,

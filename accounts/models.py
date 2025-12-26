@@ -120,6 +120,10 @@ class UserProfile(models.Model):
     @property
     def display_name(self):
         """Return the display name for the user (for public profiles)"""
+        # Check if this is the deleted account user
+        if self.user.username == 'deleted_account' or self.user.email == 'deleted@system.local':
+            return 'Deleted Account'
+        
         # If user wants to show real name AND has first_name and last_name, use real name
         if self.show_real_name and self.user.first_name and self.user.last_name:
             return f"{self.user.first_name} {self.user.last_name}".strip()
