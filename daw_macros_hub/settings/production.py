@@ -1,5 +1,5 @@
 """
-Production settings for cubase_macros_shop project.
+Production settings for daw_macros_hub project.
 
 These settings are used for production deployment with DEBUG=False.
 All security settings are enabled for production use.
@@ -34,7 +34,7 @@ EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # Email address (can be overridden with display name format: "Display Name <email@example.com>")
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Cubase Macros Shop <cms@bandpassrecords.com>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='DAW Macros Hub <cms@bandpassrecords.com>')
 SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
 
 

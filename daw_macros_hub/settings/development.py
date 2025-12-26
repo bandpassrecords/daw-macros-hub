@@ -1,5 +1,5 @@
 """
-Development settings for cubase_macros_shop project.
+Development settings for daw_macros_hub project.
 
 These settings are used for local development with DEBUG=True.
 """

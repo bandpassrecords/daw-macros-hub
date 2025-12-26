@@ -1,5 +1,5 @@
 """
-WSGI config for cubase_macros_shop project.
+WSGI config for daw_macros_hub project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -12,6 +12,6 @@ import os
 from django.core.wsgi import get_wsgi_application
 
 # Production WSGI - uses production settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cubase_macros_shop.settings.production')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'daw_macros_hub.settings.production')
 
 application = get_wsgi_application()

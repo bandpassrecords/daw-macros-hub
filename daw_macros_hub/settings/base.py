@@ -1,5 +1,5 @@
 """
-Base settings for cubase_macros_shop project.
+Base settings for daw_macros_hub project.
 
 These settings are shared by both development and production environments.
 """
@@ -69,7 +69,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-ROOT_URLCONF = 'cubase_macros_shop.urls'
+ROOT_URLCONF = 'daw_macros_hub.urls'
 
 TEMPLATES = [
     {
@@ -88,7 +88,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'cubase_macros_shop.wsgi.application'
+WSGI_APPLICATION = 'daw_macros_hub.wsgi.application'
 
 
 # ============================================================================
@@ -242,7 +242,7 @@ EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 # Email address (can be overridden with display name format: "Display Name <email@example.com>")
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Cubase Macros Shop <cms@bandpassrecords.com>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='DAW Macros Hub <cms@bandpassrecords.com>')
 SERVER_EMAIL = config('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
 
 

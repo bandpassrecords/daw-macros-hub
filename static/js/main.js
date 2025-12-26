@@ -1,5 +1,5 @@
 /**
- * Cubase Macros Shop - Modern JavaScript
+ * DAW Macros Hub - Modern JavaScript
  * Enhanced interactions and UX improvements
  */
 
@@ -466,7 +466,7 @@
     }
     
     function init() {
-        console.log('Cubase Macros Shop - Modern UI initialized');
+        console.log('DAW Macros Hub - Modern UI initialized');
     }
 
 })();

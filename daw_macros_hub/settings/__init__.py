@@ -1,5 +1,5 @@
 """
-Django settings package for cubase_macros_shop project.
+Django settings package for daw_macros_hub project.
 
 This package contains:
 - base.py: Common settings shared by all environments
@@ -8,7 +8,7 @@ This package contains:
 
 Usage:
 - Development: python manage.py runserver (uses development.py by default)
-- Production: Set DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production
+- Production: Set DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production
 """
 
 
