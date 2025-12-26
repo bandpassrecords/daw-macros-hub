@@ -23,24 +23,24 @@ sudo chown www-data:www-data /var/log/gunicorn
 Copy the service file template:
 
 ```bash
-sudo nano /etc/systemd/system/cubase-macros-shop.service
+sudo nano /etc/systemd/system/daw-macros-hub.service
 ```
 
 Or use the provided template and update paths:
 
 ```bash
 # Copy the template
-sudo cp gunicorn.service /etc/systemd/system/cubase-macros-shop.service
+sudo cp gunicorn.service /etc/systemd/system/daw-macros-hub.service
 
 # Edit with your actual paths
-sudo nano /etc/systemd/system/cubase-macros-shop.service
+sudo nano /etc/systemd/system/daw-macros-hub.service
 ```
 
 ### 3. Update Service File Paths
 
-Edit `/etc/systemd/system/cubase-macros-shop.service` and update:
+Edit `/etc/systemd/system/daw-macros-hub.service` and update:
 
-- **WorkingDirectory:** Full path to your project (e.g., `/home/user/cubase-macros-shop/cubase-macros-shop`)
+- **WorkingDirectory:** Full path to your project (e.g., `/home/user/daw-macros-hub/daw-macros-hub`)
 - **Environment PATH:** Path to your virtual environment's bin directory (e.g., `/home/user/venv/bin`)
 - **ExecStart:** Full path to gunicorn in your venv (e.g., `/home/user/venv/bin/gunicorn`)
 - **User/Group:** Your server user (commonly `www-data` for Ubuntu/Debian, `nginx` for CentOS)
@@ -54,10 +54,10 @@ After=network.target
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/home/user/cubase-macros-shop/cubase-macros-shop
+WorkingDirectory=/home/user/daw-macros-hub/daw-macros-hub
 Environment="PATH=/home/user/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production"
-EnvironmentFile=/home/user/cubase-macros-shop/cubase-macros-shop/.env
+EnvironmentFile=/home/user/daw-macros-hub/daw-macros-hub/.env
 ExecStart=/home/user/venv/bin/gunicorn \
     --workers 3 \
     --bind unix:/run/gunicorn.sock \
@@ -87,25 +87,25 @@ sudo systemctl daemon-reload
 ### 5. Enable Service (Start on Boot)
 
 ```bash
-sudo systemctl enable cubase-macros-shop.service
+sudo systemctl enable daw-macros-hub.service
 ```
 
 ### 6. Start the Service
 
 ```bash
-sudo systemctl start cubase-macros-shop.service
+sudo systemctl start daw-macros-hub.service
 ```
 
 ### 7. Check Service Status
 
 ```bash
-sudo systemctl status cubase-macros-shop.service
+sudo systemctl status daw-macros-hub.service
 ```
 
 You should see:
 ```
-● cubase-macros-shop.service - Gunicorn daemon for DAW Macros Hub Django application
-     Loaded: loaded (/etc/systemd/system/cubase-macros-shop.service; enabled; vendor preset: enabled)
+● daw-macros-hub.service - Gunicorn daemon for DAW Macros Hub Django application
+     Loaded: loaded (/etc/systemd/system/daw-macros-hub.service; enabled; vendor preset: enabled)
      Active: active (running) since ...
 ```
 
@@ -126,33 +126,33 @@ sudo tail -f /var/log/gunicorn/error.log
 
 ### Start Service
 ```bash
-sudo systemctl start cubase-macros-shop.service
+sudo systemctl start daw-macros-hub.service
 ```
 
 ### Stop Service
 ```bash
-sudo systemctl stop cubase-macros-shop.service
+sudo systemctl stop daw-macros-hub.service
 ```
 
 ### Restart Service
 ```bash
-sudo systemctl restart cubase-macros-shop.service
+sudo systemctl restart daw-macros-hub.service
 ```
 
 ### Reload Service (graceful restart)
 ```bash
-sudo systemctl reload cubase-macros-shop.service
+sudo systemctl reload daw-macros-hub.service
 ```
 
 ### Check Status
 ```bash
-sudo systemctl status cubase-macros-shop.service
+sudo systemctl status daw-macros-hub.service
 ```
 
 ### View Logs
 ```bash
 # Service logs
-sudo journalctl -u cubase-macros-shop.service -f
+sudo journalctl -u daw-macros-hub.service -f
 
 # Gunicorn access logs
 sudo tail -f /var/log/gunicorn/access.log
@@ -163,7 +163,7 @@ sudo tail -f /var/log/gunicorn/error.log
 
 ### Disable Auto-Start
 ```bash
-sudo systemctl disable cubase-macros-shop.service
+sudo systemctl disable daw-macros-hub.service
 ```
 
 ## Advanced Configuration
@@ -232,7 +232,7 @@ Group=cubase-app
 
 **Check logs:**
 ```bash
-sudo journalctl -u cubase-macros-shop.service -n 50
+sudo journalctl -u daw-macros-hub.service -n 50
 ```
 
 **Common issues:**
@@ -259,7 +259,7 @@ ls -la /run/gunicorn.sock
 
 ```bash
 # Check if service is running
-sudo systemctl status cubase-macros-shop.service
+sudo systemctl status daw-macros-hub.service
 
 # Check Gunicorn logs
 sudo tail -f /var/log/gunicorn/error.log
@@ -271,7 +271,7 @@ sudo tail -f /var/log/gunicorn/error.log
 
 **Check error logs:**
 ```bash
-sudo journalctl -u cubase-macros-shop.service --since "10 minutes ago"
+sudo journalctl -u daw-macros-hub.service --since "10 minutes ago"
 ```
 
 **Common causes:**
@@ -371,10 +371,10 @@ Wants=network-online.target
 Type=notify
 User=www-data
 Group=www-data
-WorkingDirectory=/home/user/cubase-macros-shop/cubase-macros-shop
+WorkingDirectory=/home/user/daw-macros-hub/daw-macros-hub
 Environment="PATH=/home/user/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings"
-EnvironmentFile=/home/user/cubase-macros-shop/cubase-macros-shop/.env
+EnvironmentFile=/home/user/daw-macros-hub/daw-macros-hub/.env
 
 ExecStart=/home/user/venv/bin/gunicorn \
     --workers 3 \
@@ -405,7 +405,7 @@ WantedBy=multi-user.target
 1. **File Permissions:**
    ```bash
    # Restrict service file
-   sudo chmod 644 /etc/systemd/system/cubase-macros-shop.service
+   sudo chmod 644 /etc/systemd/system/daw-macros-hub.service
    
    # Protect .env file
    chmod 600 /path/to/project/.env
@@ -432,7 +432,7 @@ WantedBy=multi-user.target
        create 0640 www-data www-data
        sharedscripts
        postrotate
-           systemctl reload cubase-macros-shop.service > /dev/null 2>&1 || true
+           systemctl reload daw-macros-hub.service > /dev/null 2>&1 || true
        endscript
    }
    ```

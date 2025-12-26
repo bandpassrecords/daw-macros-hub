@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=nginx
 Group=nginx
-WorkingDirectory=/path/to/your/project/cubase-macros-shop
+WorkingDirectory=/path/to/your/project/daw-macros-hub
 Environment="PATH=/path/to/venv/bin"
 ExecStart=/path/to/venv/bin/gunicorn \
     --workers 3 \

@@ -149,7 +149,7 @@ Visit your site and test:
    
    a. **Create service file:**
       ```bash
-      sudo nano /etc/systemd/system/cubase-macros-shop.service
+      sudo nano /etc/systemd/system/daw-macros-hub.service
       ```
    
    b. **Add service configuration:**
@@ -161,7 +161,7 @@ Visit your site and test:
       [Service]
       User=nginx
       Group=nginx
-      WorkingDirectory=/path/to/your/project/cubase-macros-shop
+      WorkingDirectory=/path/to/your/project/daw-macros-hub
       Environment="PATH=/path/to/venv/bin"
       EnvironmentFile=/path/to/your/project/.env
       ExecStart=/path/to/venv/bin/gunicorn \
@@ -193,13 +193,13 @@ Visit your site and test:
    d. **Reload systemd and enable service:**
       ```bash
       sudo systemctl daemon-reload
-      sudo systemctl enable cubase-macros-shop.service
-      sudo systemctl start cubase-macros-shop.service
+      sudo systemctl enable daw-macros-hub.service
+      sudo systemctl start daw-macros-hub.service
       ```
    
    e. **Verify service is running:**
       ```bash
-      sudo systemctl status cubase-macros-shop.service
+      sudo systemctl status daw-macros-hub.service
       ```
       
       You should see `Active: active (running)`

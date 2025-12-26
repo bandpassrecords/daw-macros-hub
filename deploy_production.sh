@@ -923,7 +923,7 @@ main() {
     
     # Get project directory
     if [ -z "$PROJECT_DIR" ]; then
-        read -p "Enter project directory path (e.g., /home/user/cubase-macros-shop/cubase-macros-shop): " PROJECT_DIR
+        read -p "Enter project directory path (e.g., /home/user/daw-macros-hub/daw-macros-hub): " PROJECT_DIR
     fi
     
     # Validate project directory

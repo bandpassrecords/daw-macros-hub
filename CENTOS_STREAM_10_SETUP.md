@@ -113,7 +113,7 @@ sudo systemctl status nginx
 ### Create Service File
 
 ```bash
-sudo nano /etc/systemd/system/cubase-macros-shop.service
+sudo nano /etc/systemd/system/daw-macros-hub.service
 ```
 
 **Important for CentOS:**
@@ -256,8 +256,8 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 
 # Start and enable Django application
-sudo systemctl start cubase-macros-shop.service
-sudo systemctl enable cubase-macros-shop.service
+sudo systemctl start daw-macros-hub.service
+sudo systemctl enable daw-macros-hub.service
 ```
 
 ### Check Status
@@ -267,7 +267,7 @@ sudo systemctl enable cubase-macros-shop.service
 sudo systemctl status nginx
 
 # Check Django application
-sudo systemctl status cubase-macros-shop.service
+sudo systemctl status daw-macros-hub.service
 
 # Check all services
 sudo systemctl list-units --type=service --state=running | grep -E 'nginx|cubase'

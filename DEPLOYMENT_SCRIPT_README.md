@@ -100,7 +100,7 @@ You can:
 
 ### Files and Directories
 
-- `/etc/systemd/system/cubase-macros-shop.service` - Systemd service file
+- `/etc/systemd/system/daw-macros-hub.service` - Systemd service file
 - `/etc/nginx/conf.d/dmh.bandpassrecords.com.conf` - Nginx configuration
 - `/var/log/gunicorn/` - Gunicorn log directory
 - `$PROJECT_DIR/venv/` - Python virtual environment (if created)
@@ -109,7 +109,7 @@ You can:
 
 ### Services
 
-- `cubase-macros-shop.service` - Django application service (enabled for auto-start)
+- `daw-macros-hub.service` - Django application service (enabled for auto-start)
 - `nginx.service` - Nginx web server (enabled for auto-start)
 - `firewalld.service` - Firewall service (enabled)
 
@@ -126,13 +126,13 @@ If the script fails, you can:
 
 ```bash
 # Check Django application
-sudo systemctl status cubase-macros-shop.service
+sudo systemctl status daw-macros-hub.service
 
 # Check Nginx
 sudo systemctl status nginx
 
 # View logs
-sudo journalctl -u cubase-macros-shop.service -f
+sudo journalctl -u daw-macros-hub.service -f
 sudo tail -f /var/log/gunicorn/error.log
 sudo tail -f /var/log/nginx/error.log
 ```
@@ -141,7 +141,7 @@ sudo tail -f /var/log/nginx/error.log
 
 ```bash
 # Restart Django application
-sudo systemctl restart cubase-macros-shop.service
+sudo systemctl restart daw-macros-hub.service
 
 # Restart Nginx
 sudo systemctl restart nginx
@@ -227,7 +227,7 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 
 # 6. Restart service
-sudo systemctl restart cubase-macros-shop.service
+sudo systemctl restart daw-macros-hub.service
 ```
 
 ## Security Notes
@@ -242,7 +242,7 @@ sudo systemctl restart cubase-macros-shop.service
 
 For issues or questions:
 - Check the logs: `/var/log/gunicorn/error.log`
-- Check service status: `sudo systemctl status cubase-macros-shop.service`
+- Check service status: `sudo systemctl status daw-macros-hub.service`
 - Review deployment guides: `PRODUCTION_DEPLOYMENT.md` and `CENTOS_STREAM_10_SETUP.md`
 
 
