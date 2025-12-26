@@ -39,7 +39,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <code class="small">{{ order.id|truncatechars:8 }}</code>
+                                            <code class="small">{{ order.id }}</code>
                                         </td>
                                         <td>
                                             <span class="badge bg-primary">{{ order.macros_count }} macro{{ order.macros_count|pluralize }}</span>
@@ -60,12 +60,12 @@
                                                     <div class="row g-2">
                                                         {% for item in order.get_macros %}
                                                         <div class="col-md-6">
-                                                            <div class="d-flex align-items-start p-2 bg-secondary rounded">
+                                                            <div class="d-flex align-items-start p-2 bg-dark border rounded" style="background-color: var(--bg-tertiary) !important;">
                                                                 <div class="flex-grow-1">
-                                                                    <div class="fw-bold">{{ item.macro_name }}</div>
+                                                                    <div class="fw-bold text-light">{{ item.macro_name }}</div>
                                                                     {% if item.macro %}
-                                                                        <small class="text-muted">
-                                                                            <i class="fas fa-user me-1"></i>{{ item.macro_author }}
+                                                                        <small class="text-light" style="opacity: 0.8;">
+                                                                            <i class="fas fa-user me-1"></i>{% if item.macro_author == 'deleted_account' or item.macro_author == 'Deleted Account' %}Deleted Account{% else %}{{ item.macro_author }}{% endif %}
                                                                         </small>
                                                                         <div class="mt-1">
                                                                             <a href="{% url 'macros:macro_detail' macro_id=item.macro.id %}" class="btn btn-sm btn-outline-primary">
@@ -73,8 +73,8 @@
                                                                             </a>
                                                                         </div>
                                                                     {% else %}
-                                                                        <small class="text-muted">
-                                                                            <i class="fas fa-user me-1"></i>{{ item.macro_author }}
+                                                                        <small class="text-light" style="opacity: 0.8;">
+                                                                            <i class="fas fa-user me-1"></i>{% if item.macro_author == 'deleted_account' or item.macro_author == 'Deleted Account' %}Deleted Account{% else %}{{ item.macro_author }}{% endif %}
                                                                         </small>
                                                                         <div class="mt-1">
                                                                             <span class="badge bg-warning text-dark">

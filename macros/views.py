@@ -746,7 +746,7 @@ def upload_and_download(request):
                         order=order,
                         macro=macro,
                         macro_name=macro.name,
-                        macro_author=macro.user.username
+                        macro_author=macro.user.profile.display_name if hasattr(macro.user, 'profile') else macro.user.username
                     )
                     
                     # Create download record
