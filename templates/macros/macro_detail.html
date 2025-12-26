@@ -270,6 +270,36 @@
                 </div>
             </div>
             {% endif %}
+            
+            <!-- Secret Link Sharing (for private macros, owner only) -->
+            {% if user.is_authenticated and user == macro.user and macro.is_private %}
+            <div class="card mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-share-alt"></i> Share Private Macro
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Generate a secret link to share this private macro with others. Anyone with the link can view the macro.
+                    </p>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="secret-link-input" 
+                               value="{% if macro.secret_token %}{{ request.scheme }}://{{ request.get_host }}{% url 'macros:macro_detail_by_secret' macro.secret_token %}{% else %}Generate link to view{% endif %}" 
+                               readonly>
+                        <button class="btn btn-outline-primary" type="button" onclick="copySecretLink()">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                        <button class="btn btn-primary" type="button" onclick="generateSecretLink('{{ macro.id }}')">
+                            <i class="fas fa-sync-alt"></i> {% if macro.secret_token %}Regenerate{% else %}Generate{% endif %}
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> The link allows anyone to view this macro without logging in.
+                    </small>
+                </div>
+            </div>
+            {% endif %}
         </div>
         
         <!-- Sidebar -->
