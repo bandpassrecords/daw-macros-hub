@@ -25,4 +25,5 @@ urlpatterns = [
     
     # AJAX endpoints
     path('favorite/<uuid:macro_id>/', views.toggle_favorite, name='toggle_favorite'),
+    path('toggle-visibility/<uuid:macro_id>/', views.toggle_visibility, name='toggle_visibility'),
 ] 

@@ -278,8 +278,67 @@
             </div>
         </div>
         
-        <!-- Favorites Tab (only for own profile) -->
+        <!-- Private Macros Tab (only for own profile) -->
         {% if profile_user == user %}
+        <div class="tab-pane fade" id="private-macros" role="tabpanel">
+            <div class="card border-top-0">
+                <div class="card-body">
+                    {% if private_macros %}
+                    <div class="row">
+                        {% for macro in private_macros %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card macro-card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-2">
+                                        <a href="{% url 'macros:macro_detail' macro.id %}" class="text-decoration-none">
+                                            {{ macro.name|truncatechars:40 }}
+                                        </a>
+                                    </h6>
+                                    
+                                    <span class="badge bg-secondary mb-2"><i class="fas fa-lock"></i> Private</span>
+                                    
+                                    {% if macro.key_binding %}
+                                    <div class="mb-2">
+                                        <span class="key-binding">
+                                            <i class="fas fa-keyboard"></i> {{ macro.key_binding }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if macro.description %}
+                                    <p class="card-text text-muted small text-truncate-2">
+                                        {{ macro.description }}
+                                    </p>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-download"></i> {{ macro.download_count }}
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer bg-transparent">
+                                    <a href="{% url 'macros:macro_detail' macro.id %}" class="btn btn-sm btn-primary w-100">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+                        <h6>No private macros yet</h6>
+                        <p class="text-muted">Your private macros will appear here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Favorites Tab (only for own profile) -->
         <div class="tab-pane fade" id="favorites" role="tabpanel">
             <div class="card border-top-0">
                 <div class="card-body">

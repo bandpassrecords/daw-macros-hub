@@ -157,6 +157,10 @@
                         {% endif %}
                         
                         {% if user.is_authenticated and user == macro.user %}
+                        <button class="btn btn-outline-warning btn-toggle-visibility" data-macro-id="{{ macro.id }}">
+                            <i class="fas fa-{% if macro.is_private %}lock{% else %}unlock{% endif %}"></i> 
+                            Make {% if macro.is_private %}Public{% else %}Private{% endif %}
+                        </button>
                         <a href="{% url 'macros:edit_macro' macro.id %}" class="btn btn-outline-secondary">
                             <i class="fas fa-edit"></i> Edit Macro
                         </a>
@@ -537,6 +541,60 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 } else {
                     alert(data.message);
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
+        });
+    }
+    
+    // Initialize toggle visibility button
+    const toggleVisibilityBtn = document.querySelector('.btn-toggle-visibility');
+    if (toggleVisibilityBtn) {
+        toggleVisibilityBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const macroId = this.dataset.macroId;
+            const originalText = this.innerHTML;
+            const originalClass = this.className;
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            
+            const csrftoken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || getCookie('csrftoken');
+            
+            fetch(`/macros/toggle-visibility/${macroId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button text and icon
+                    if (data.is_private) {
+                        this.innerHTML = '<i class="fas fa-unlock"></i> Make Public';
+                    } else {
+                        this.innerHTML = '<i class="fas fa-lock"></i> Make Private';
+                    }
+                    if (window.showToast) {
+                        showToast(data.message, 'success');
+                    } else {
+                        alert(data.message);
+                    }
+                    // Reload page after a short delay to reflect changes
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alert('Failed to update macro visibility');
                     this.innerHTML = originalText;
                     this.disabled = false;
                 }

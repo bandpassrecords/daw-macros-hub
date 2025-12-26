@@ -456,6 +456,21 @@ def toggle_favorite(request, macro_id):
     })
 
 
+@login_required
+def toggle_visibility(request, macro_id):
+    """Toggle private/public status for a macro (AJAX)"""
+    macro = get_object_or_404(Macro, id=macro_id, user=request.user)
+    
+    macro.is_private = not macro.is_private
+    macro.save()
+    
+    return JsonResponse({
+        'success': True,
+        'is_private': macro.is_private,
+        'message': 'Macro is now ' + ('private' if macro.is_private else 'public')
+    })
+
+
 
 
 @login_required
