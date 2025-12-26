@@ -33,6 +33,7 @@ class Macro(models.Model):
     xml_snippet = models.TextField(blank=True)  # Store the macro definition XML snippet (from <list name="Macros">)
     reference_snippet = models.TextField(blank=True)  # Store the macro reference XML snippet (for <list name="Commands">)
     is_private = models.BooleanField(default=True)  # True = private, False = public (default to private for safety)
+    secret_token = models.CharField(max_length=32, unique=True, null=True, blank=True, db_index=True)  # Secret token for sharing private macros
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -71,6 +72,25 @@ class Macro(models.Model):
     def commands_count(self):
         """Get the number of commands in this macro"""
         return len(self.commands_json) if self.commands_json else 0
+    
+    def generate_secret_token(self):
+        """Generate a unique secret token for sharing private macros"""
+        import secrets
+        token = secrets.token_urlsafe(24)  # 24 bytes = 32 characters in URL-safe base64
+        # Ensure uniqueness
+        while Macro.objects.filter(secret_token=token).exists():
+            token = secrets.token_urlsafe(24)
+        self.secret_token = token
+        self.save(update_fields=['secret_token'])
+        return token
+    
+    def get_secret_link(self, request=None):
+        """Get the secret sharing link for this macro"""
+        if not self.secret_token:
+            self.generate_secret_token()
+        if request:
+            return request.build_absolute_uri(f'/macros/share/{self.secret_token}/')
+        return f'/macros/share/{self.secret_token}/'
 
 
 class MacroVote(models.Model):

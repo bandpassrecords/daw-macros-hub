@@ -155,29 +155,6 @@
                 </div>
             </div>
             
-            <!-- Danger Zone -->
-            <div class="card mt-4 border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h6 class="text-danger mb-1">Delete Macro</h6>
-                            <p class="text-muted mb-0">
-                                Permanently delete this macro. This action cannot be undone.
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-outline-danger" onclick="confirmMacroDeletion()">
-                                <i class="fas fa-trash"></i> Delete Macro
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -221,5 +198,70 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function copySecretLink() {
+    const input = document.getElementById('secret-link-input');
+    if (input && input.value && input.value !== 'Generate link to view') {
+        input.select();
+        input.setSelectionRange(0, 99999); // For mobile devices
+        document.execCommand('copy');
+        if (window.showToast) {
+            showToast('Secret link copied to clipboard!', 'success');
+        }
+    } else {
+        if (window.showToast) {
+            showToast('Please generate a secret link first.', 'warning');
+        }
+    }
+}
+
+function generateSecretLink(macroId) {
+    const url = `/macros/generate-secret-link/${macroId}/`;
+    const csrftoken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                      document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    
+    if (!csrftoken) {
+        if (window.showToast) {
+            showToast('Security token missing. Please refresh the page.', 'error');
+        }
+        return;
+    }
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.secret_link) {
+            const input = document.getElementById('secret-link-input');
+            if (input) {
+                input.value = data.secret_link;
+            }
+            if (window.showToast) {
+                showToast('Secret link generated successfully!', 'success');
+            }
+            // Update the button text
+            const btn = event.target.closest('button');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Regenerate';
+            }
+        } else {
+            if (window.showToast) {
+                showToast(data.message || 'Failed to generate secret link.', 'error');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (window.showToast) {
+            showToast('An error occurred. Please try again.', 'error');
+        }
+    });
+}
 </script>
 {% endblock %} 

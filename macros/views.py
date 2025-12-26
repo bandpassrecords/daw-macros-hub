@@ -101,6 +101,31 @@ def macro_list(request):
     return render(request, 'macros/macro_list.html', context)
 
 
+def macro_detail_by_secret(request, secret_token):
+    """View a private macro using a secret token"""
+    macro = get_object_or_404(
+        Macro.objects.select_related(
+            'user', 'cubase_version'
+        ).prefetch_related('votes__user'),
+        secret_token=secret_token
+    )
+    
+    # Only allow access to private macros via secret token
+    if not macro.is_private:
+        messages.warning(request, 'This macro is public. Use the regular link to access it.')
+        return redirect('macros:macro_detail', macro_id=macro.id)
+    
+    # Store the secret token in session to allow adding to cart
+    if 'secret_accessible_macros' not in request.session:
+        request.session['secret_accessible_macros'] = []
+    if str(macro.id) not in request.session['secret_accessible_macros']:
+        request.session['secret_accessible_macros'].append(str(macro.id))
+        request.session.modified = True
+    
+    # Use the same context as macro_detail
+    return _render_macro_detail(request, macro, is_secret_link=True)
+
+
 def macro_detail(request, macro_id):
     """Detailed view of a macro with voting"""
     macro = get_object_or_404(
@@ -114,6 +139,11 @@ def macro_detail(request, macro_id):
     if macro.is_private and (not request.user.is_authenticated or macro.user != request.user):
         raise Http404("Macro not found")
     
+    return _render_macro_detail(request, macro, is_secret_link=False)
+
+
+def _render_macro_detail(request, macro, is_secret_link=False):
+    """Helper function to render macro detail page"""
     
     # Get user's vote if authenticated
     user_vote = None
@@ -152,6 +182,7 @@ def macro_detail(request, macro_id):
         'is_favorited': is_favorited,
         'recent_votes': recent_votes,
         'related_macros': related_macros,
+        'is_secret_link': is_secret_link,
     }
     
     return render(request, 'macros/macro_detail.html', context)
@@ -471,12 +502,54 @@ def toggle_visibility(request, macro_id):
     })
 
 
+@login_required
+@require_http_methods(["POST"])
+def generate_secret_link(request, macro_id):
+    """Generate or regenerate a secret link for a private macro (AJAX)"""
+    macro = get_object_or_404(Macro, id=macro_id, user=request.user)
+    
+    if not macro.is_private:
+        return JsonResponse({
+            'success': False,
+            'message': 'Secret links are only available for private macros.'
+        })
+    
+    # Generate or regenerate the secret token
+    secret_token = macro.generate_secret_token()
+    secret_link = request.build_absolute_uri(f'/macros/share/{secret_token}/')
+    
+    return JsonResponse({
+        'success': True,
+        'secret_link': secret_link,
+        'message': 'Secret link generated successfully!'
+    })
+
 
 
 @login_required
 def add_to_cart(request, macro_id):
     """Add a macro to the user's cart (staging area)"""
-    macro = get_object_or_404(Macro, id=macro_id, is_private=False)
+    # Check if macro exists
+    macro = get_object_or_404(Macro, id=macro_id)
+    
+    # Allow adding to cart if:
+    # 1. Macro is public (is_private=False)
+    # 2. Macro is private but user owns it
+    # 3. Macro is private but user accessed it via secret link (stored in session)
+    can_add = False
+    if not macro.is_private:
+        can_add = True
+    elif request.user.is_authenticated and macro.user == request.user:
+        can_add = True
+    elif request.session.get('secret_accessible_macros') and str(macro_id) in request.session['secret_accessible_macros']:
+        can_add = True
+    
+    if not can_add:
+        return JsonResponse({
+            'success': False, 
+            'message': 'This macro is private and cannot be added to cart', 
+            'cart_count': len(request.session.get('macro_cart', []))
+        })
     
     # Initialize cart if it doesn't exist
     if 'macro_cart' not in request.session:

@@ -7,6 +7,7 @@ urlpatterns = [
     # Macro browsing
     path('', views.macro_list, name='macro_list'),
     path('macro/<uuid:macro_id>/', views.macro_detail, name='macro_detail'),
+    path('share/<str:secret_token>/', views.macro_detail_by_secret, name='macro_detail_by_secret'),
     path('popular/', views.popular_macros, name='popular_macros'),
     
     # Key Commands file management
@@ -26,4 +27,5 @@ urlpatterns = [
     # AJAX endpoints
     path('favorite/<uuid:macro_id>/', views.toggle_favorite, name='toggle_favorite'),
     path('toggle-visibility/<uuid:macro_id>/', views.toggle_visibility, name='toggle_visibility'),
+    path('generate-secret-link/<uuid:macro_id>/', views.generate_secret_link, name='generate_secret_link'),
 ] 
