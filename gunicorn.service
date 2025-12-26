@@ -1,5 +1,5 @@
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Shop Django application
+Description=Gunicorn daemon for DAW Macros Hub Django application
 After=network.target
 
 [Service]
@@ -12,8 +12,8 @@ ExecStart=/path/to/venv/bin/gunicorn \
     --bind unix:/run/gunicorn.sock \
     --access-logfile /var/log/gunicorn/access.log \
     --error-logfile /var/log/gunicorn/error.log \
-    --env DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production \
-    cubase_macros_shop.wsgi:application
+    --env DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production \
+    daw_macros_hub.wsgi:application
 
 Restart=always
 RestartSec=3

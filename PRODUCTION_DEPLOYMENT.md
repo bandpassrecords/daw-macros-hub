@@ -101,7 +101,7 @@ python3 manage.py createsuperuser
 2. Navigate to Sites > Sites
 3. Update the default site:
    - Domain name: `cms.bandpassrecords.com`
-   - Display name: `Cubase Macros Shop`
+   - Display name: `DAW Macros Hub`
 
 ### 5. Test the Application
 
@@ -155,7 +155,7 @@ Visit your site and test:
    b. **Add service configuration:**
       ```ini
       [Unit]
-      Description=Gunicorn daemon for Cubase Macros Shop Django application
+      Description=Gunicorn daemon for DAW Macros Hub Django application
       After=network.target
 
       [Service]
@@ -169,8 +169,8 @@ Visit your site and test:
           --bind unix:/run/gunicorn.sock \
           --access-logfile /var/log/gunicorn/access.log \
           --error-logfile /var/log/gunicorn/error.log \
-          --env DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production \
-          cubase_macros_shop.wsgi:application
+          --env DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production \
+          daw_macros_hub.wsgi:application
 
       Restart=always
       RestartSec=3
@@ -441,7 +441,7 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "cubase_macros_shop.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "daw_macros_hub.wsgi:application"]
 ```
 
 ### Option 3: Using Platform-as-a-Service
@@ -450,7 +450,7 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8000", "cubase_macros_shop.wsgi:application"
 1. Install Heroku CLI
 2. Create `Procfile`:
    ```
-   web: gunicorn cubase_macros_shop.wsgi:application
+   web: gunicorn daw_macros_hub.wsgi:application
    ```
 3. Deploy: `git push heroku main`
 

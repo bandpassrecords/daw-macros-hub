@@ -48,7 +48,7 @@ Edit `/etc/systemd/system/cubase-macros-shop.service` and update:
 **Example configuration:**
 ```ini
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Shop Django application
+Description=Gunicorn daemon for DAW Macros Hub Django application
 After=network.target
 
 [Service]
@@ -56,14 +56,14 @@ User=www-data
 Group=www-data
 WorkingDirectory=/home/user/cubase-macros-shop/cubase-macros-shop
 Environment="PATH=/home/user/venv/bin"
-Environment="DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production"
+Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production"
 EnvironmentFile=/home/user/cubase-macros-shop/cubase-macros-shop/.env
 ExecStart=/home/user/venv/bin/gunicorn \
     --workers 3 \
     --bind unix:/run/gunicorn.sock \
     --access-logfile /var/log/gunicorn/access.log \
     --error-logfile /var/log/gunicorn/error.log \
-    cubase_macros_shop.wsgi:application
+    daw_macros_hub.wsgi:application
 
 Restart=always
 RestartSec=3
@@ -104,7 +104,7 @@ sudo systemctl status cubase-macros-shop.service
 
 You should see:
 ```
-● cubase-macros-shop.service - Gunicorn daemon for Cubase Macros Shop Django application
+● cubase-macros-shop.service - Gunicorn daemon for DAW Macros Hub Django application
      Loaded: loaded (/etc/systemd/system/cubase-macros-shop.service; enabled; vendor preset: enabled)
      Active: active (running) since ...
 ```
@@ -181,7 +181,7 @@ Or set specific variables:
 
 ```ini
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings"
+Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings"
 Environment="PYTHONPATH=/path/to/your/project"
 ```
 
@@ -287,7 +287,7 @@ Before enabling, test the command manually:
 ```bash
 cd /path/to/your/project
 source /path/to/venv/bin/activate
-gunicorn --workers 3 --bind unix:/run/gunicorn.sock cubase_macros_shop.wsgi:application
+gunicorn --workers 3 --bind unix:/run/gunicorn.sock daw_macros_hub.wsgi:application
 ```
 
 If this works, the service should work too.
@@ -363,7 +363,7 @@ Then add to crontab:
 
 ```ini
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Shop Django application
+Description=Gunicorn daemon for DAW Macros Hub Django application
 After=network.target postgresql.service
 Wants=network-online.target
 
@@ -373,7 +373,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/home/user/cubase-macros-shop/cubase-macros-shop
 Environment="PATH=/home/user/venv/bin"
-Environment="DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings"
+Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings"
 EnvironmentFile=/home/user/cubase-macros-shop/cubase-macros-shop/.env
 
 ExecStart=/home/user/venv/bin/gunicorn \
@@ -386,8 +386,8 @@ ExecStart=/home/user/venv/bin/gunicorn \
     --access-logfile /var/log/gunicorn/access.log \
     --error-logfile /var/log/gunicorn/error.log \
     --log-level info \
-    --env DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production \
-    cubase_macros_shop.wsgi:application
+    --env DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production \
+    daw_macros_hub.wsgi:application
 
 ExecReload=/bin/kill -s HUP $MAINPID
 Restart=always

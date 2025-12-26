@@ -1,20 +1,20 @@
-# Cubase Macros Shop
+# DAW Macros Hub
 
-A Django web application for sharing and managing Cubase Key Commands and macros. Users can upload their Key Commands XML files, share individual macros with the community, and discover popular macros from other users.
+A Django web application for sharing and managing DAW Key Commands and macros. Users can upload their Key Commands XML files, share individual macros with the community, and discover popular macros from other users.
 
 ## Features
 
 ### 🔑 **Key Commands Management**
-- Upload Cubase Key Commands XML files
+- Upload DAW Key Commands XML files
 - Parse and extract individual macros from uploaded files
 - Download original files or create custom macro collections
-- Cubase version compatibility tracking
+- DAW version compatibility tracking
 
 ### 👥 **Community Sharing**
 - Make macros public for community discovery
 - Browse popular and trending macros
 - Rate and favorite macros
-- Search and filter by category, Cubase version, and more
+- Search and filter by category, DAW version, and more
 
 ### 📊 **Analytics & Discovery**
 - View macro popularity statistics
@@ -40,7 +40,7 @@ A Django web application for sharing and managing Cubase Key Commands and macros
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd cubasemacros
+   cd daw-macros-hub
    ```
 
 2. **Create virtual environment**
@@ -57,7 +57,7 @@ A Django web application for sharing and managing Cubase Key Commands and macros
 4. **Configure settings**
    ```bash
    # Copy and edit settings if needed
-   cp cubase_macros_shop/settings.py cubase_macros_shop/local_settings.py
+   cp daw_macros_hub/settings.py daw_macros_hub/local_settings.py
    ```
 
 5. **Run migrations**
@@ -118,9 +118,9 @@ A Django web application for sharing and managing Cubase Key Commands and macros
 
 #### **Project Structure**
 ```
-cubasemacros/
-├── cubase_macros_shop/      # Main Django project
-│   ├── settings.py
+daw-macros-hub/
+├── daw_macros_hub/      # Main Django project
+│   ├── settings/
 │   ├── urls.py
 │   └── wsgi.py
 ├── core/                       # Core app (homepage, static pages)

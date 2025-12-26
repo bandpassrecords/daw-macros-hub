@@ -2,7 +2,7 @@
 
 ###############################################################################
 # Production Deployment Script for CentOS Stream 10
-# Cubase Macros Shop - Django Application
+# DAW Macros Hub - Django Application
 ###############################################################################
 
 set -e  # Exit on error
@@ -252,7 +252,7 @@ step_configure_site() {
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cubase_macros_shop.settings.production')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'daw_macros_hub.settings.production')
 django.setup()
 
 from django.contrib.sites.models import Site
@@ -263,7 +263,7 @@ try:
     old_name = site.name
     
     site.domain = '$DOMAIN'
-    site.name = 'Cubase Macros Shop'
+    site.name = 'DAW Macros Hub'
     site.save()
     
     print(f"Site updated successfully!")
@@ -274,7 +274,7 @@ except Site.DoesNotExist:
     site = Site.objects.create(
         id=1,
         domain='$DOMAIN',
-        name='Cubase Macros Shop'
+        name='DAW Macros Hub'
     )
     print(f"Site created successfully!")
     print(f"  Domain: {site.domain}")
@@ -287,7 +287,7 @@ EOF
         if [ $? -eq 0 ]; then
             print_success "Django Site configured"
             print_info "Site domain: $DOMAIN"
-            print_info "Site name: Cubase Macros Shop"
+            print_info "Site name: DAW Macros Hub"
         else
             print_error "Failed to configure Django Site"
             print_warning "You may need to configure it manually in Django admin or shell"
@@ -299,7 +299,7 @@ EOF
         echo "  from django.contrib.sites.models import Site"
         echo "  site = Site.objects.get(id=1)"
         echo "  site.domain = '$DOMAIN'"
-        echo "  site.name = 'Cubase Macros Shop'"
+        echo "  site.name = 'DAW Macros Hub'"
         echo "  site.save()"
     fi
 }
@@ -362,7 +362,7 @@ step_create_systemd_service() {
         # This creates /run/gunicorn/ with proper permissions
         cat > "$SERVICE_FILE" << EOF
 [Unit]
-Description=Gunicorn daemon for Cubase Macros Shop Django application
+Description=Gunicorn daemon for DAW Macros Hub Django application
 After=network.target
 
 [Service]
@@ -371,7 +371,7 @@ User=$SERVICE_USER
 Group=$SERVICE_GROUP
 WorkingDirectory=$PROJECT_DIR
 Environment="PATH=$VENV_DIR/bin"
-Environment="DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production"
+Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production"
 EnvironmentFile=$PROJECT_DIR/.env
 RuntimeDirectory=gunicorn
 RuntimeDirectoryMode=0755
@@ -383,7 +383,7 @@ ExecStart=$VENV_DIR/bin/gunicorn \\
     --error-logfile /var/log/gunicorn/error.log \\
     --timeout 120 \\
     --graceful-timeout 30 \\
-    cubase_macros_shop.wsgi:application
+    daw_macros_hub.wsgi:application
 
 Restart=always
 RestartSec=3
@@ -745,7 +745,7 @@ step_create_superuser() {
 ###############################################################################
 
 main() {
-    print_header "Cubase Macros Shop - Production Deployment Script"
+    print_header "DAW Macros Hub - Production Deployment Script"
     print_info "This script will guide you through the production deployment process"
     print_info "Make sure you have the .env file ready with all necessary configuration"
     echo ""

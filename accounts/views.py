@@ -36,7 +36,7 @@ class CustomPasswordResetView(auth_views.PasswordResetView):
         # Ensure domain is set correctly from the request
         current_site = get_current_site(self.request)
         context['domain'] = current_site.domain
-        context['site_name'] = current_site.name or 'Cubase Macros Shop'
+        context['site_name'] = current_site.name or 'DAW Macros Hub'
         return context
     
     def form_valid(self, form):
@@ -52,7 +52,7 @@ class CustomPasswordResetView(auth_views.PasswordResetView):
             'html_email_template_name': self.html_email_template_name,  # This enables HTML emails
             'extra_email_context': {
                 'domain': get_current_site(self.request).domain,
-                'site_name': get_current_site(self.request).name or 'Cubase Macros Shop',
+                'site_name': get_current_site(self.request).name or 'DAW Macros Hub',
             }
         }
         # Call form.save() with our options - this sends the email
@@ -121,7 +121,7 @@ def signup_email(request):
             
             try:
                 send_mail(
-                    subject='Verify your email address - Cubase Macros Shop',
+                    subject='Verify your email address',
                     message=plain_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[email],

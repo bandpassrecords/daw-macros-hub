@@ -119,7 +119,7 @@ sudo nano /etc/systemd/system/cubase-macros-shop.service
 **Important for CentOS:**
 - Use `User=nginx` and `Group=nginx` (not www-data)
 - Ensure paths are correct
-- Include `Environment="DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production"`
+- Include `Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production"`
 
 ### Set Permissions
 

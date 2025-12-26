@@ -416,18 +416,17 @@ def save_selected_macros(request):
                     
                     # Create macro with both XML snippets
                     # Note: cubase_version is stored per macro from the upload form
-                    macro, created = Macro.objects.update_or_create(
+                    # Allow duplicate names - each upload creates a new macro
+                    macro = Macro.objects.create(
                         user=request.user,
                         name=macro_data['name'],
-                        defaults={
-                            'cubase_version_id': cubase_version_id,  # Each macro gets the Cubase version from upload
-                            'description': description,
-                            'key_binding': key_binding,
-                            'commands_json': commands,
-                            'xml_snippet': macro_data.get('xml_snippet', ''),
-                            'reference_snippet': macro_data.get('reference_snippet', ''),
-                            'is_private': macro_is_private,  # Use individual macro privacy setting
-                        }
+                        cubase_version_id=cubase_version_id,  # Each macro gets the Cubase version from upload
+                        description=description,
+                        key_binding=key_binding,
+                        commands_json=commands,
+                        xml_snippet=macro_data.get('xml_snippet', ''),
+                        reference_snippet=macro_data.get('reference_snippet', ''),
+                        is_private=macro_is_private,  # Use individual macro privacy setting
                     )
                     
                     # Log if version was saved correctly (for debugging)
@@ -436,9 +435,8 @@ def save_selected_macros(request):
                     else:
                         logger.debug(f"Macro {macro.id} '{macro.name}' saved with version ID: {cubase_version_id}")
                     
-                    if created:
-                        created_macros += 1
-                        logger.debug(f"Created macro: {macro_data['name']}")
+                    created_macros += 1
+                    logger.debug(f"Created macro: {macro_data['name']}")
                     
                 except Exception as macro_error:
                     logger.warning(f"Error processing macro '{macro_data.get('name', 'unknown')}': {macro_error}")

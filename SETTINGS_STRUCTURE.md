@@ -5,7 +5,7 @@ This project uses a modular settings structure to separate development and produ
 ## Settings Structure
 
 ```
-cubase_macros_shop/
+daw_macros_hub/
 ├── settings/
 │   ├── __init__.py          # Package initialization
 │   ├── base.py              # Common settings shared by all environments
@@ -51,12 +51,12 @@ When running locally, Django automatically uses development settings:
 
 ```bash
 python manage.py runserver
-# Uses: cubase_macros_shop.settings.development
+# Uses: daw_macros_hub.settings.development
 ```
 
 Or explicitly:
 ```bash
-DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.development python manage.py runserver
+DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.development python manage.py runserver
 ```
 
 ### Production
@@ -65,19 +65,19 @@ For production, set the environment variable:
 
 **Option 1: Environment Variable**
 ```bash
-export DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production
+export DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production
 python manage.py runserver
 ```
 
 **Option 2: In systemd service file:**
 ```ini
 [Service]
-Environment="DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production"
+Environment="DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production"
 ```
 
 **Option 3: In Gunicorn command:**
 ```bash
-gunicorn --env DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production cubase_macros_shop.wsgi:application
+gunicorn --env DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production daw_macros_hub.wsgi:application
 ```
 
 **Option 4: In wsgi.py (already configured):**
@@ -86,15 +86,15 @@ The `wsgi.py` file is already set to use production settings by default.
 ## Configuration Files
 
 ### `manage.py`
-- Default: `cubase_macros_shop.settings.development`
+- Default: `daw_macros_hub.settings.development`
 - Used for: Local development, Django management commands
 
 ### `wsgi.py`
-- Default: `cubase_macros_shop.settings.production`
+- Default: `daw_macros_hub.settings.production`
 - Used for: Production WSGI server (Gunicorn)
 
 ### `asgi.py`
-- Default: `cubase_macros_shop.settings.production`
+- Default: `daw_macros_hub.settings.production`
 - Used for: Production ASGI server (if using async features)
 
 ## Environment Variables
@@ -123,16 +123,16 @@ Both development and production settings use environment variables from `.env` f
 python manage.py runserver
 
 # Or explicitly
-python manage.py runserver --settings=cubase_macros_shop.settings.development
+python manage.py runserver --settings=daw_macros_hub.settings.development
 ```
 
 ### Testing Production Settings Locally
 ```bash
 # Temporarily use production settings
-DJANGO_SETTINGS_MODULE=cubase_macros_shop.settings.production python manage.py runserver
+DJANGO_SETTINGS_MODULE=daw_macros_hub.settings.production python manage.py runserver
 
 # Or
-python manage.py runserver --settings=cubase_macros_shop.settings.production
+python manage.py runserver --settings=daw_macros_hub.settings.production
 ```
 
 ### Production Deployment
@@ -154,10 +154,10 @@ print(f"Settings module: {settings.SETTINGS_MODULE}")
 ### Test Settings
 ```bash
 # Test development settings
-python manage.py check --settings=cubase_macros_shop.settings.development
+python manage.py check --settings=daw_macros_hub.settings.development
 
 # Test production settings
-python manage.py check --deploy --settings=cubase_macros_shop.settings.production
+python manage.py check --deploy --settings=daw_macros_hub.settings.production
 ```
 
 ## Migration from Old Settings
@@ -167,12 +167,12 @@ The old `settings.py` has been backed up as `settings.py.old`.
 If you need to reference it:
 ```bash
 # View old settings
-cat cubase_macros_shop/settings.py.old
+cat daw_macros_hub/settings.py.old
 ```
 
 ## Troubleshooting
 
-### ImportError: No module named 'cubase_macros_shop.settings.development'
+### ImportError: No module named 'daw_macros_hub.settings.development'
 - Make sure the `settings/` directory exists
 - Check that `__init__.py` exists in the settings directory
 - Verify you're in the correct directory
