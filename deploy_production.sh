@@ -349,27 +349,45 @@ EOF
         fi
         
         # Configure PostgreSQL for remote/local connections (if needed)
-        if confirm "Configure PostgreSQL to allow local connections"; then
+        if confirm "Configure PostgreSQL to allow local password authentication"; then
             print_info "Configuring PostgreSQL authentication..."
             
             PG_HBA="/var/lib/pgsql/data/pg_hba.conf"
             
             # Backup original file
             cp "$PG_HBA" "${PG_HBA}.backup"
+            print_success "Backed up pg_hba.conf to ${PG_HBA}.backup"
             
-            # Add local connection rule if not present
+            # Replace ident authentication with md5 for local connections
+            # This allows password authentication from localhost
+            sed -i 's/^\(local[[:space:]]*all[[:space:]]*all[[:space:]]*\)ident/\1md5/' "$PG_HBA"
+            sed -i 's/^\(host[[:space:]]*all[[:space:]]*all[[:space:]]*127\.0\.0\.1\/32[[:space:]]*\)ident/\1md5/' "$PG_HBA"
+            sed -i 's/^\(host[[:space:]]*all[[:space:]]*all[[:space:]]*::1\/128[[:space:]]*\)ident/\1md5/' "$PG_HBA"
+            
+            # Add specific user rules if not present (for extra security)
             if ! grep -q "^local.*all.*$DB_USER.*md5" "$PG_HBA"; then
-                echo "local   all             $DB_USER                                md5" >> "$PG_HBA"
+                # Add before the default rules
+                sed -i "/^# TYPE/a local   all             $DB_USER                                md5" "$PG_HBA"
             fi
             
             if ! grep -q "^host.*all.*$DB_USER.*127.0.0.1/32.*md5" "$PG_HBA"; then
-                echo "host    all             $DB_USER            127.0.0.1/32            md5" >> "$PG_HBA"
+                sed -i "/^# IPv4 local connections:/a host    all             $DB_USER            127.0.0.1/32            md5" "$PG_HBA"
+            fi
+            
+            if ! grep -q "^host.*all.*$DB_USER.*::1/128.*md5" "$PG_HBA"; then
+                sed -i "/^# IPv6 local connections:/a host    all             $DB_USER            ::1/128                 md5" "$PG_HBA"
             fi
             
             # Reload PostgreSQL configuration
             systemctl reload postgresql
             
-            print_success "PostgreSQL authentication configured"
+            if [ $? -eq 0 ]; then
+                print_success "PostgreSQL authentication configured successfully"
+                print_info "Changed authentication from 'ident' to 'md5' for local connections"
+            else
+                print_error "Failed to reload PostgreSQL. Please check the configuration manually."
+                print_info "You may need to restart PostgreSQL: sudo systemctl restart postgresql"
+            fi
         fi
     else
         print_warning "Skipping PostgreSQL installation"
