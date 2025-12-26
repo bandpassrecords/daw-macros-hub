@@ -211,6 +211,25 @@
                 </div>
             </div>
             
+            <!-- Delete Account Section -->
+            <div class="card mt-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        <strong>Warning:</strong> Deleting your account is permanent and cannot be undone. 
+                        This will remove all your data, including your macros, profile, and account information.
+                    </p>
+                    
+                    <a href="{% url 'accounts:delete_account' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash-alt"></i> Delete Account
+                    </a>
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>
