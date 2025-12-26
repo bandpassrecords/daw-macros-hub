@@ -275,11 +275,7 @@
         input.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Show file name
-                const fileName = file.name;
-                const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                
-                // Create or update file info display
+                // Get or create file info display
                 let fileInfo = input.parentElement.querySelector('.file-info');
                 if (!fileInfo) {
                     fileInfo = document.createElement('div');
@@ -287,12 +283,26 @@
                     input.parentElement.appendChild(fileInfo);
                 }
                 
-                fileInfo.innerHTML = `
-                    <div class="alert alert-info mb-0">
-                        <i class="fas fa-file"></i> 
-                        <strong>${fileName}</strong> (${fileSize} MB)
-                    </div>
-                `;
+                // Check if this is an XML file input (has accept=".xml" attribute)
+                const isXmlInput = input.hasAttribute('accept') && input.getAttribute('accept').includes('.xml');
+                
+                // Validate file type first (for XML inputs)
+                if (isXmlInput && !file.name.toLowerCase().endsWith('.xml')) {
+                    fileInfo.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Please select an XML file.
+                        </div>
+                    `;
+                    input.value = '';
+                    // Remove file info after a short delay
+                    setTimeout(() => {
+                        if (fileInfo && fileInfo.parentElement) {
+                            fileInfo.remove();
+                        }
+                    }, 3000);
+                    return;
+                }
                 
                 // Validate file size
                 if (file.size > 10 * 1024 * 1024) {
@@ -303,7 +313,25 @@
                         </div>
                     `;
                     input.value = '';
+                    // Remove file info after a short delay
+                    setTimeout(() => {
+                        if (fileInfo && fileInfo.parentElement) {
+                            fileInfo.remove();
+                        }
+                    }, 3000);
+                    return;
                 }
+                
+                // Only show file info if validation passes
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                
+                fileInfo.innerHTML = `
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-file"></i> 
+                        <strong>${fileName}</strong> (${fileSize} MB)
+                    </div>
+                `;
             }
         });
     });

@@ -151,7 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (files.length > 0) {
                 fileInput.files = files;
-                updateFileLabel(fileInput.files[0]);
                 handleFileSelected();
             }
         }, false);
@@ -185,7 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (fileInput) {
         fileInput.addEventListener('change', function() {
             if (fileInput.files.length > 0) {
-                updateFileLabel(fileInput.files[0]);
                 handleFileSelected();
             }
         });
@@ -197,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!file) return;
         
-        // Validate file type
+        // Validate file type first
         if (!file.name.toLowerCase().endsWith('.xml')) {
             if (window.showToast) {
                 showToast('Please select an XML file.', 'warning');
@@ -216,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
             resetFileLabel();
             return;
         }
+        
+        // Only update label if file is valid
+        updateFileLabel(file);
     }
     
     // Form submission handler
